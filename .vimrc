@@ -113,3 +113,8 @@ au BufWritePost * silent !(git add %:p)
 
 :map ` :highlight Normal ctermfg=white guifg=white <CR>:highlight folded ctermfg=yellow ctermbg=black guifg=yellow guibg=black<CR>:source ~/Dropbox/Latex/fold.md<CR>zr
 
+" Python settings
+au BufNewFile,BufRead *.py set expandtab
+au BufNewFile,BufRead *.py set shiftwidth=4
+au BufNewFile,BufRead *.py set softtabstop=4
+au BufNewFile,BufRead *.py set tabstop=4
