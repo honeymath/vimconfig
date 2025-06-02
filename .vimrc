@@ -117,10 +117,298 @@ autocmd BufEnter main.tex,ReadMe.md execute('cd '.expand('%:p:h'))
 " the following just add up to git
 au BufWritePost * silent !(git add %:p)
 
-:map ` :highlight Normal ctermfg=white guifg=white <CR>:highlight folded ctermfg=yellow ctermbg=black guifg=yellow guibg=black<CR>:source ~/Dropbox/Latex/fold.md<CR>zr
+":map ` :highlight Normal ctermfg=white guifg=white <CR>:highlight folded ctermfg=yellow ctermbg=black guifg=yellow guibg=black<CR>:source ~/Dropbox/Latex/fold.md<CR>zr
 
 " Python settings
 au BufNewFile,BufRead *.py set expandtab
 au BufNewFile,BufRead *.py set shiftwidth=4
 au BufNewFile,BufRead *.py set softtabstop=4
 au BufNewFile,BufRead *.py set tabstop=4
+
+:iab AA ⋀
+:iab VV ⋁
+:iab /\/\ ♡
+:iab [- ∈
+:iab \[- ∉
+:iab -] ∋
+:iab \-] ∌
+:iab ¬ ⊥
+:iab l__ ⌊
+:iab __l ⌋
+:iab ¯¯l ⌉
+:iab l¯¯ ⌈
+:iab <=> ⟺
+:iab ⟸> ⟺
+:iab => ⟹
+autocmd FileType tex :iab <= ⟸
+autocmd FileType python :iab <= ⟸  |iunabbrev <=
+":iab <= ⟸
+:iab << ⊆
+:iab nn ∩
+:iab φφ ϕ
+:iab uu ∪
+:iab ><< ⊈
+:iab <>> ⊉
+:iab >>>> ⊇
+:iab O+ ⨁
+:iab OX ⨂
+:iab ~= ≅
+:iab ~~ ≈
+autocmd FileType tex :iab == ≡
+autocmd FileType python :iab == ≡|iunabbrev ==
+":iab == ≡
+:iab ≅-> ⥱
+:iab ≅−> ⥱
+:iab ~=⟶  ⥱
+:iab ~=-> ⥱
+:iab ~=−> ⥱
+:iab ~≠ ≇
+:iab ?= ≟
+:iab ∑∑ ∃
+:iab ∏∏ ∀
+:iab ±± ∓
+:iab (-> ↪
+:iab (−> ↪
+:iab <-) ↩
+:iab <−) ↩
+:iab ←) ↩
+:iab ->> ↠
+:iab −>> ↠
+:iab <<- ↞
+:iab <<− ↞
+:iab -> ⟶
+:iab −> ⟶
+":iab -> ➔
+:iab <- ⟵
+:iab <− ⟵
+:iab <−> ⟵
+:iab ⟵> ↔
+":iab <- ⬅ 
+:iab --> ⤍
+:iab −-> ⤍
+:iab −−> ⤍
+:iab ⟵- ⤌
+":iab ⬅- ⤌
+:iab l-> ↦
+:iab <-l ↤
+:iab l−> ↦
+:iab llv ↧
+:iab lla ↥
+:iab lV ⭣
+:iab lv ⭣
+:iab lA ⭡
+:iab la ⭡
+:iab <> ⬨
+":iab ** ⁎
+:iab \\\ ∖
+":iab [] ∎
+":lab lx ⋉
+":iab xl ⋊
+:iab xoo ⊠
+:iab poo ⊞
+
+":iab^0 <BS>⁰
+":iab^2 <BS>²
+":iab^3 <BS>³
+":iab^4 <BS>⁴
+":iab^5 <BS>⁵
+":iab^6 <BS>⁶
+":iab^7 <BS>⁷
+":iab^8 <BS>⁸
+":iab^9 <BS>⁹
+
+":iab_0 <BS>₀
+":iab_1 <BS>₁
+":iab_2 <BS>₂
+":iab_3 <BS>₃
+":iab_4 <BS>₄
+":iab_5 <BS>₅
+":iab_6 <BS>₆
+":iab_7 <BS>₇
+":iab_8 <BS>₈
+":iab_9 <BS>₉
+
+:iab^+ <BS>⁺
+:iab^- <BS>⁻
+
+
+":iab- −
+
+:iab_+ <BS>₊
+:iab_- <BS>₋
+
+:iab xx ×
+:iab oo ⚬
+:iab ,, ␣
+:iab UUU ∐
+:iab ππ ϖ
+
+
+:iab bA 𝔸
+:iab bB 𝔹
+:iab bC ℂ
+:iab bD 𝔻
+:iab bE 𝔼
+:iab bF 𝔽
+:iab bG 𝔾
+:iab bH ℍ
+:iab bI 𝕀
+:iab bJ 𝕁
+:iab bK 𝕂
+:iab bL 𝕃
+:iab bM 𝕄
+:iab bN ℕ
+:iab bO 𝕆
+:iab bP ℙ
+:iab bQ ℚ
+:iab bR ℝ
+:iab bS 𝕊
+:iab bT 𝕋
+:iab bU 𝕌
+:iab bV 𝕍
+:iab bW 𝕎
+:iab bX 𝕏
+:iab bY 𝕐
+:iab bZ ℤ
+
+
+:iab sA 𝒜
+:iab sB ℬ
+:iab sC 𝒞
+:iab sD 𝒟
+:iab sE ℰ
+:iab sF ℱ
+:iab sG 𝒢
+:iab sH ℋ
+:iab sI ℐ
+:iab sJ 𝒥
+:iab sK 𝒦
+:iab sL ℒ
+:iab sM ℳ
+:iab sN 𝒩
+:iab sO 𝒪
+:iab sP 𝒫
+:iab sQ 𝒬
+:iab sR ℛ
+:iab sS 𝒮
+:iab sT 𝒯
+:iab sU 𝒰
+:iab sV 𝒱
+:iab sW 𝒲
+:iab sX 𝒳
+:iab sY 𝒴
+:iab sZ 𝒵
+
+:iab fkA 𝕬
+:iab fkB 𝕭
+:iab fkC 𝕮
+:iab fkD 𝕯
+:iab fkE 𝕰
+:iab fkF 𝕱
+:iab fkG 𝕲
+:iab fkH 𝕳
+:iab fkI 𝕴
+:iab fkJ 𝕵
+:iab fkK 𝕶
+:iab fkL 𝕷
+:iab fkM 𝕸
+:iab fkN 𝕹
+:iab fkO 𝕺
+:iab fkP 𝕻
+:iab fkQ 𝕼
+:iab fkR 𝕽
+:iab fkS 𝕾
+:iab fkT 𝕿
+:iab fkU 𝖀
+:iab fkV 𝖁
+:iab fkW 𝖂
+:iab fkX 𝖃
+:iab fkY 𝖄
+:iab fkZ 𝖅
+:iab fka 𝖆
+:iab fkb 𝖇
+:iab fkc 𝖈
+:iab fkd 𝖉
+:iab fke 𝖊
+:iab fkf 𝖋
+:iab fkg 𝖌
+:iab fkh 𝖍
+:iab fki 𝖎
+:iab fkj 𝖏
+:iab fkk 𝖐
+:iab fkl 𝖑
+:iab fkm 𝖒
+:iab fkn 𝖓
+:iab fko 𝖔
+:iab fkp 𝖕
+:iab fkq 𝖖
+:iab fkr 𝖗
+:iab fks 𝖘
+:iab fkt 𝖙
+:iab fku 𝖚
+:iab fkv 𝖛
+:iab fkw 𝖜
+:iab fkx 𝖝
+:iab fky 𝖞
+:iab fkz 𝖟
+
+:iab ba 𝗮
+:iab bb 𝗯
+:iab bc 𝗰
+:iab bd 𝗱
+:iab bbe 𝗲
+:iab bf 𝗳
+:iab bg 𝗴
+:iab bh 𝗵
+:iab bi 𝗶
+:iab bj 𝗷
+:iab bk 𝗸
+:iab bl 𝗹
+:iab bm 𝗺
+:iab bn 𝗻
+:iab bo 𝗼
+:iab bp 𝗽
+:iab bq 𝗾
+:iab br 𝗿
+:iab bs 𝘀
+:iab bt 𝘁
+:iab bu 𝘂
+:iab bv 𝘃
+:iab bw 𝘄
+:iab bx 𝘅
+:iab bby 𝘆
+:iab bz 𝘇
+
+:iab cA 𝘼
+:iab cB 𝘽
+:iab cC 𝘾
+:iab cD 𝘿
+:iab cE 𝙀
+:iab cF 𝙁
+:iab cG 𝙂
+:iab cH 𝙃
+:iab cI 𝙄
+:iab cJ 𝙅
+:iab cK 𝙆
+:iab cL 𝙇
+:iab cM 𝙈
+:iab cN 𝙉
+:iab cO 𝙊
+:iab cP 𝙋
+:iab cQ 𝙌
+:iab cR 𝙍
+:iab cS 𝙎
+:iab cT 𝙏
+:iab cU 𝙐
+:iab cV 𝙑
+:iab cW 𝙒
+:iab cX 𝙓
+:iab cY 𝙔
+:iab cZ 𝙕
+
+
+:iab 𝗯1 𝟙
+:iab bb1 𝟙
+:iab 𝗯0 𝟘
+:iab bb0 𝟘
+
