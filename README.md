@@ -1,6 +1,8 @@
 [](../../readme.md)
 This is the vimrc file, allowing you to enter a folder and escape from a file. 
 
+[](test/readme.md)
+
 To use that simply set your '~/.vimrc' to the following command, soppose you pull this repositories to `~/repositories`
 
 ```

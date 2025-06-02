@@ -2,13 +2,19 @@
 
 set nocompatible              " be iMproved, required
 filetype off                  " required
+syntax on
+
+if has("termguicolors")
+  let &t_SI = "\e[6 q"   " I-beam in Insert mode
+  let &t_EI = "\e[2 q"   " Block in Normal mode
+endif
 
 " set the runtime path to include Vundle and initialize
 set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
-Plugin 'ybian/smartim'
-Plugin 'iamcco/markdown-preview.nvim'
-call vundle#end()            " required
+"call vundle#begin()
+"Plugin 'ybian/smartim'
+"Plugin 'iamcco/markdown-preview.nvim'
+"call vundle#end()            " required
 "filetype plugin indent on    " required
 let g:smartim_default = 'com.apple.keylayout.ABC'
 inoremap <C-c> <esc>
@@ -23,7 +29,7 @@ let g:mkdp_highlight_css = local_path . '/highlight.css'
 let g:mkdp_theme = 'light'
 
 colorscheme torte
-set transparency=20
+"set transparency=20
 set guifont=Courier_new:h24
 set backspace=2
 set guioptions-=r
