@@ -4,6 +4,10 @@ set nocompatible              " be iMproved, required
 filetype off                  " required
 syntax on
 
+call plug#begin('~/.vim/plugged')
+Plug 'github/copilot.vim'
+call plug#end()
+
 if has("termguicolors")
   let &t_SI = "\e[6 q"   " I-beam in Insert mode
   let &t_EI = "\e[2 q"   " Block in Normal mode
@@ -101,7 +105,7 @@ inoremap <C-Z> <C-]>
 
 :command W w
 
-(set of `iab` and `lab` commands omitted for brevity here — ask if you'd like them included again)
+"(set of `iab` and `lab` commands omitted for brevity here — ask if you'd like them included again)
 
 :nnoremap gf :execute 'source ' . local_path . '/main.vim'<CR>
 :nnoremap gl :execute 'source ' . local_path . '/escape.vim'<CR>
