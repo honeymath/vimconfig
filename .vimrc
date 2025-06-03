@@ -13,6 +13,14 @@ if has("termguicolors")
   let &t_EI = "\e[2 q"   " Block in Normal mode
 endif
 
+function! SuggestOneWord()
+  let suggestion = copilot#Accept("")
+  let bar = copilot#TextQueuedForInsertion()
+  return strlen(bar) > 0 ? matchstr(bar, '^\s*\S\+') : ""
+endfunction
+
+inoremap <expr> <C-l> SuggestOneWord()
+
 " set the runtime path to include Vundle and initialize
 set rtp+=~/.vim/bundle/Vundle.vim
 "call vundle#begin()
