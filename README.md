@@ -5,6 +5,11 @@ This is the vimrc file, allowing you to enter a folder and escape from a file.
 
 [](.vimrc)
 [](.vimrc_windows)
+[](enter_windows.vim)
+
+[](main.vim)
+[](escape.vim)
+
 
 To use that simply set your '~/.vimrc' to the following command, soppose you pull this repositories to `~/repositories`
 
