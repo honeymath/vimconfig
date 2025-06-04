@@ -1,0 +1,17 @@
+
+" Vundle Settings
+
+set nocompatible              " be iMproved, required
+filetype off                  " required
+syntax on
+
+:cd C:\Tom Huh\Repositories
+:e readme.md
+
+
+
+:nnoremap <M-x> :execute "!start cmd.exe /K cd /d \"" . expand('%:p:h') . "\""<CR>
+"au BufWritePost * silent !(git add %:p)
+autocmd BufWritePost * execute 'silent !git add "' . expand('%') . '"'
+
+
