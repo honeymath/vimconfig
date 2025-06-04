@@ -15,3 +15,13 @@ syntax on
 autocmd BufWritePost * execute 'silent !git add "' . expand('%') . '"'
 
 
+":map <M-\> :source C:\Tom Huh\Repositories\vimconfig\escape.vim<CR>
+":map \ :source C:\Tom Huh\Repositories\vimconfig\main.vim<CR>
+
+:map <M-\\> :source "C:/Tom Huh/Repositories/vimconfig/escape.vim"<CR>
+
+:map \ :source "C:/Tom Huh/Repositories/vimconfig/main.vim"<CR>
+
+
+
+
