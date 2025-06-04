@@ -12,8 +12,8 @@ syntax on
 
 :nnoremap <M-x> :execute "!start cmd.exe /K cd /d \"" . expand('%:p:h') . "\""<CR>
 "au BufWritePost * silent !(git add %:p)
-"autocmd BufWritePost * execute 'silent !git add "' . expand('%') . '"'
-autocmd BufWritePost * call system('git add "' . expand('%:p') . '"')
+autocmd BufWritePost * execute 'silent !git add "' . expand('%') . '"'
+"autocmd BufWritePost * call system('git add "' . expand('%:p') . '"')
 
 
 ":map <M-\> :source C:\Tom Huh\Repositories\vimconfig\escape.vim<CR>
