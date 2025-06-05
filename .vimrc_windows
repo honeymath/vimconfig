@@ -19,12 +19,39 @@ autocmd BufWritePost * call system('cd /d "' . expand('%:p:h') . '" && git add "
 "autocmd BufWritePost * call system('git add "' . expand('%:p') . '"')
 
 
+
+set jumpoptions+=stack
+augroup BackslashMap
+  autocmd!
+  autocmd FileType markdown nnoremap <buffer> \ :normal! 0%gf<CR>
+  autocmd FileType tex      nnoremap <buffer> \ :normal! 0%%gf<CR>
+  autocmd BufEnter "C:\Tom Huh\Repositories\readme.md" clearjumps
+augroup END
+function! SmartCtrlO()
+  " Get the current position in the jumplist
+  " first, let try to jump for one step.
+  execute "normal! \<C-o>" 
+  let [jumplist, idx] = getjumplist()
+  let save_cursor = getpos('.')
+  while idx > 0
+    let prev = jumplist[idx - 1]
+    " prev is a list: [bufnr, lnum, col, text]
+    let bufnr = prev['bufnr']
+    if bufnr != bufnr('%')  " It's a jump to another file
+      break
+    endif
+    " jump to the previous entry
+    execute "normal! \<C-o>"
+    let [jumplist, idx] = getjumplist()
+  endwhile
+  call setpos('.', save_cursor)  
+endfunction
+:map <M-\\> :call SmartCtrlO()<CR>
 ":map <M-\> :source C:\Tom Huh\Repositories\vimconfig\escape.vim<CR>
 ":map \ :source C:\Tom Huh\Repositories\vimconfig\main.vim<CR>
 
-:map <M-\\> :source "C:\Tom Huh\Repositories\vimconfig\escape.vim"<CR>
 
-source vimconfig\enter_windows.vim
+"source vimconfig\enter_windows.vim
 
 
 

@@ -21,6 +21,32 @@ endfunction
 
 inoremap <expr> <C-l> SuggestOneWord()
 
+set jumpoptions+=stack
+augroup BackslashMap
+  autocmd!
+  autocmd FileType markdown nnoremap <buffer> \ :normal! 0%gf<CR>
+  autocmd FileType tex      nnoremap <buffer> \ :normal! 0%%gf<CR>
+  autocmd BufEnter ~/repositories/readme.md clearjumps
+augroup END
+function! SmartCtrlO()
+  " Get the current position in the jumplist
+  " first, let try to jump for one step.
+  execute "normal! \<C-o>" 
+  let [jumplist, idx] = getjumplist()
+  let save_cursor = getpos('.')
+  while idx > 0
+    let prev = jumplist[idx - 1]
+    " prev is a list: [bufnr, lnum, col, text]
+    let bufnr = prev['bufnr']
+    if bufnr != bufnr('%')  " It's a jump to another file
+      break
+    endif
+    " jump to the previous entry
+    execute "normal! \<C-o>"
+    let [jumplist, idx] = getjumplist()
+  endwhile
+  call setpos('.', save_cursor)  
+endfunction
 " set the runtime path to include Vundle and initialize
 set rtp+=~/.vim/bundle/Vundle.vim
 "call vundle#begin()
@@ -28,8 +54,8 @@ set rtp+=~/.vim/bundle/Vundle.vim
 "Plugin 'iamcco/markdown-preview.nvim'
 "call vundle#end()            " required
 "filetype plugin indent on    " required
-let g:smartim_default = 'com.apple.keylayout.ABC'
-inoremap <C-c> <esc>
+"let g:smartim_default = 'com.apple.keylayout.ABC'
+"inoremap <C-c> <esc>
 
 "End Vundle Settings
 :set relativenumber
@@ -66,8 +92,13 @@ set nu
 ":map ≤ :!(cd ~/Dropbox/Latex && pdflatex -shell-escape main && open -a '/Applications/Skim.app' main.pdf)<CR><CR>
 :map ≤ :!(pdflatex --synctex=1 -shell-escape main && open main.pdf && cp main.pdf ~/Desktop)<CR><CR>
 
-:map « :execute 'source ' . local_path . '/escape.vim'<CR>
-:map \ :execute 'source ' . local_path . '/main.vim'<CR>
+:map « :call SmartCtrlO()<CR>
+":map « :execute 'source ' . local_path . '/escape.vim'<CR>
+":map \ :execute 'source ' . local_path . '/main.vim'<CR>
+"I wanna map \ to whenever it is markdown file, then it doing %gf, when it is latex, it doing %%gf
+":map \ 
+":map \ gf<CR>
+
 :map œ :execute 'source ' . local_path . '/change.vim'<CR>
 
 :map <D-Bslash> /src=\\|href=\\|<r><CR>
@@ -115,11 +146,11 @@ inoremap <C-Z> <C-]>
 
 "(set of `iab` and `lab` commands omitted for brevity here — ask if you'd like them included again)
 
-:nnoremap gf :execute 'source ' . local_path . '/main.vim'<CR>
-:nnoremap gl :execute 'source ' . local_path . '/escape.vim'<CR>
-:nnoremap ga :execute 'e ' . local_path . '/readme.md'<CR>
+":nnoremap gf :execute 'source ' . local_path . '/main.vim'<CR>
+":nnoremap gl :execute 'source ' . local_path . '/escape.vim'<CR>
+":nnoremap ga :execute 'e ' . local_path . '/readme.md'<CR>
 
-set iskeyword=@,192-255
+"set iskeyword=@,192-255
 
 "autocmd BufEnter * if expand('%:p') == 'Users/qiruili/.vimrc'|echo 'it is vimrc file'|endif
 autocmd BufEnter main.tex,ReadMe.md execute('cd '.expand('%:p:h'))
@@ -424,3 +455,4 @@ autocmd FileType python :iab == ≡|iunabbrev ==
 :iab 𝗯0 𝟘
 :iab bb0 𝟘
 
+:clearjumps
