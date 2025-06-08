@@ -66,7 +66,7 @@ function! SmartCtrlO()
   endwhile
   call setpos('.', save_cursor)  
 endfunction
-:map <M-\\> :call SmartCtrlO()<CR>
+:map <M-\> :call SmartCtrlO()<CR>
 ":map <M-\> :source C:\Tom Huh\Repositories\vimconfig\escape.vim<CR>
 ":map \ :source C:\Tom Huh\Repositories\vimconfig\main.vim<CR>
 function! BuildAndOpenPDF()
