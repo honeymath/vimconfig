@@ -95,7 +95,7 @@ function! BuildAndOpenPDF()
     let l:pdfpath = fnamemodify(l:dir . '\main.pdf', ':p')
     if filereadable(l:pdfpath)
         echo "Opening " . l:pdfpath
-        execute 'silent !start "" ' . shellescape(l:pdfpath)
+        execute '!start "" ' . shellescape(l:pdfpath)
     else
         echo "main.pdf not found!"
     endif
