@@ -8,7 +8,9 @@ syntax on
 :cd C:\Tom Huh\Repositories
 :e readme.md
 
-set guifont=Courier_New:h24
+"set guifont=Courier_New:h24
+
+set guifont=NotoSansMono:h24
 
 :nnoremap <M-x> :execute "!start cmd.exe /K cd /d \"" . expand('%:p:h') . "\""<CR>
 "au BufWritePost * silent !(git add %:p)
