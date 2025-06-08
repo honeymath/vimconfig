@@ -75,7 +75,8 @@ function! BuildAndOpenPDF()
 
     " Loop upward until we find main.tex or reach root
     while 1
-        if filereadable(l:dir . '\.(main.tex')
+        let l:texpath = fnamemodify(l:dir . '\main.tex', ':p')
+        if filereadable(l:texpath)
             break
         endif
         let l:parent = fnamemodify(l:dir, ':h')
@@ -87,19 +88,21 @@ function! BuildAndOpenPDF()
     endwhile
 
     " Run pdflatex
-    let l:texfile = l:dir . '\main.tex'
-    echo "Running pdflatex on " . l:texfile
-    execute 'silent !pdflatex -interaction=nonstopmode ' . shellescape(l:texfile)
+    echo "Running pdflatex on " . l:texpath
+    execute 'silent !pdflatex -interaction=nonstopmode ' . shellescape(l:texpath)
 
-    " Open main.pdf (Windows version using start)
-    let l:pdffile = l:dir . '\main.pdf'
-    if filereadable(l:pdffile)
-        echo "Opening " . l:pdffile
-        execute 'silent !start "" ' . shellescape(l:pdffile)
+    " Open main.pdf
+    let l:pdfpath = fnamemodify(l:dir . '\main.pdf', ':p')
+    if filereadable(l:pdfpath)
+        echo "Opening " . l:pdfpath
+        execute 'silent !start "" ' . shellescape(l:pdfpath)
     else
         echo "main.pdf not found!"
     endif
 endfunction
+
+" Map Alt-Z to the function
+nnoremap <silent> <M-z> :call BuildAndOpenPDF()<CR>
 
 " Map Alt-Z to the function
 nnoremap <silent> <M-z> :call BuildAndOpenPDF()<CR>
