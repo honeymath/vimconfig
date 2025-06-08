@@ -75,7 +75,7 @@ function! BuildAndOpenPDF()
 
     " Loop upward until we find main.tex or reach root
     while 1
-        if filereadable(l:dir . '/main.tex')
+        if filereadable(l:dir . '\.(main.tex')
             break
         endif
         let l:parent = fnamemodify(l:dir, ':h')
@@ -87,12 +87,12 @@ function! BuildAndOpenPDF()
     endwhile
 
     " Run pdflatex
-    let l:texfile = l:dir . '/main.tex'
+    let l:texfile = l:dir . '\main.tex'
     echo "Running pdflatex on " . l:texfile
     execute 'silent !pdflatex -interaction=nonstopmode ' . shellescape(l:texfile)
 
     " Open main.pdf (Windows version using start)
-    let l:pdffile = l:dir . '/main.pdf'
+    let l:pdffile = l:dir . '\main.pdf'
     if filereadable(l:pdffile)
         echo "Opening " . l:pdffile
         execute 'silent !start "" ' . shellescape(l:pdffile)
