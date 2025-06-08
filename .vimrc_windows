@@ -89,7 +89,7 @@ function! BuildAndOpenPDF()
 
     " Run pdflatex
     echo "Running pdflatex on " . l:texpath
-    execute 'silent !pdflatex -interaction=nonstopmode ' . shellescape(l:texpath)
+    execute '!pdflatex -interaction=nonstopmode ' . shellescape(l:texpath)
 
     " Open main.pdf
     let l:pdfpath = fnamemodify(l:dir . '\main.pdf', ':p')
