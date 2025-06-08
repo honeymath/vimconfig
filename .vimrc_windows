@@ -69,7 +69,40 @@ endfunction
 :map <M-\\> :call SmartCtrlO()<CR>
 ":map <M-\> :source C:\Tom Huh\Repositories\vimconfig\escape.vim<CR>
 ":map \ :source C:\Tom Huh\Repositories\vimconfig\main.vim<CR>
+function! BuildAndOpenPDF()
+    " Start from current file's directory
+    let l:dir = expand('%:p:h')
 
+    " Loop upward until we find main.tex or reach root
+    while 1
+        if filereadable(l:dir . '/main.tex')
+            break
+        endif
+        let l:parent = fnamemodify(l:dir, ':h')
+        if l:parent == l:dir
+            echo "main.tex not found!"
+            return
+        endif
+        let l:dir = l:parent
+    endwhile
+
+    " Run pdflatex
+    let l:texfile = l:dir . '/main.tex'
+    echo "Running pdflatex on " . l:texfile
+    execute 'silent !pdflatex -interaction=nonstopmode ' . shellescape(l:texfile)
+
+    " Open main.pdf (Windows version using start)
+    let l:pdffile = l:dir . '/main.pdf'
+    if filereadable(l:pdffile)
+        echo "Opening " . l:pdffile
+        execute 'silent !start "" ' . shellescape(l:pdffile)
+    else
+        echo "main.pdf not found!"
+    endif
+endfunction
+
+" Map Alt-Z to the function
+nnoremap <silent> <M-z> :call BuildAndOpenPDF()<CR>
 
 "source vimconfig\enter_windows.vim
 
