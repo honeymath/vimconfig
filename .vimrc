@@ -22,12 +22,31 @@ endfunction
 inoremap <expr> <C-l> SuggestOneWord()
 
 set jumpoptions+=stack
-augroup BackslashMap
-  autocmd!
-  autocmd FileType markdown nnoremap <buffer> \ :normal! 0%gf<CR>
-  autocmd FileType tex      nnoremap <buffer> \ :normal! 0%%gf<CR>
-  autocmd BufEnter ~/repositories/readme.md clearjumps
-augroup END
+
+
+autocmd BufEnter ~/repositories/readme.md clearjumps
+:nnoremap \ :call EnterPath()<CR>
+function! EnterPath()
+  let l:line = getline('.')
+  if l:line =~ '\[\zs.*\ze\](\zs[^)]\+\ze)'  " Markdown style
+    let l:path = matchstr(l:line, '\[\zs.*\ze\](\zs[^)]\+\ze)')
+  elseif l:line =~ '\\input{\zs[^}]\+\ze}'  " LaTeX \input style
+    let l:path = matchstr(l:line, '\\input{\zs[^}]\+\ze}')
+    let l:path = substitute(l:path, '\.tex$', '', '')  " Remove .tex if it exists
+    let l:path = l:path . '.tex'  " Always add .tex explicitly
+  else
+    echo "No matching path found"
+    return
+  endif
+  let l:dir = fnamemodify(l:path, ':h')
+  if !isdirectory(l:dir)
+    call mkdir(l:dir, 'p')
+    echo "Created: " . l:dir
+  else
+    echo "Directory already exists"
+  endif
+  execute 'edit' fnameescape(expand('%:p:h') . '/' .l:path)
+endfunction
 function! SmartCtrlO()
   " Get the current position in the jumplist
   " first, let try to jump for one step.
