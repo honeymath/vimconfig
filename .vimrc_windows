@@ -10,7 +10,16 @@ syntax on
 
 "set guifont=Courier_New:h24
 
-set guifont=NotoSansMono:h24
+"set guifont=NotoSansMono:h24
+
+" Always use utf-8
+set encoding=utf-8
+
+" Main font: Consolas is better than Courier_New
+set guifont=Consolas:h14
+
+" Wide font for CJK or missing symbols
+set guifontwide=SimSun:h14
 
 :nnoremap <M-x> :execute "!start cmd.exe /K cd /d \"" . expand('%:p:h') . "\""<CR>
 "au BufWritePost * silent !(git add %:p)
