@@ -4,6 +4,9 @@ set nocompatible              " be iMproved, required
 filetype off                  " required
 syntax on
 
+source ~/repositories/syncpdf-remote/synccurl.vim
+source ~/repositories/syncpdf-remote/worker.vim
+
 call plug#begin('~/.vim/plugged')
 Plug 'github/copilot.vim'
 call plug#end()
@@ -109,7 +112,7 @@ set nu
 ":map ≥ :!(cd ~/Dropbox/Latex && latex -shell-escape main && bibtex main && latex -shell-escape main && makeindex -s nomencl.ist -t "main.nlg" -o "main.nls" "main.nlo"&& pdflatex -shell-escape main && open -a '/Applications/Skim.app' main.pdf)<CR><CR>
 :map ≥ <Plug>MarkdownPreview
 ":map ≤ :!(cd ~/Dropbox/Latex && pdflatex -shell-escape main && open -a '/Applications/Skim.app' main.pdf)<CR><CR>
-:map ≤ :!(pdflatex --synctex=1 -shell-escape main && open main.pdf && cp main.pdf ~/Desktop)<CR><CR>
+":map ≤ :!(pdflatex --synctex=1 -shell-escape main && open main.pdf && cp main.pdf ~/Desktop)<CR><CR>
 
 :map « :call SmartCtrlO()<CR>
 ":map « :execute 'source ' . local_path . '/escape.vim'<CR>
