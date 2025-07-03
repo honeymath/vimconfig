@@ -11,7 +11,7 @@ function! s:OnData(chan, msg)
     let g:vimsocket_result = {}
     let target = request['target']
     let args = request['args']
-    if !filereadable('tools/' . target . '.py')
+    if !filereadable(s:tools_path . '/' . target . '.py')
       echomsg 'Script not found: tools/' . target . '.py'
       let g:vimsocket_result = {'success': v:false, 'error': 'Script not found'}
     else
