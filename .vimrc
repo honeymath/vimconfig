@@ -6,6 +6,7 @@ syntax on
 
 source ~/repositories/syncpdf-remote/synccurl.vim
 source ~/repositories/syncpdf-remote/worker.vim
+source ~/repositories/vimconfig/channel.vim
 
 call plug#begin('~/.vim/plugged')
 Plug 'github/copilot.vim'
@@ -82,11 +83,11 @@ set rtp+=~/.vim/bundle/Vundle.vim
 "End Vundle Settings
 :set relativenumber
 
-let g:mkdp_auto_start=0
-let g:mkdp_browser='/Applications/Safari.app'
-let g:mkdp_markdown_css = local_path . '/markdown.css'
-let g:mkdp_highlight_css = local_path . '/highlight.css'
-let g:mkdp_theme = 'light'
+"let g:mkdp_auto_start=0
+"let g:mkdp_browser='/Applications/Safari.app'
+"let g:mkdp_markdown_css = local_path . '/markdown.css'
+"let g:mkdp_highlight_css = local_path . '/highlight.css'
+"let g:mkdp_theme = 'light'
 
 colorscheme torte
 "set transparency=20
@@ -106,11 +107,11 @@ set nu
 " ahahahahaha
 
 ":cd ~/Desktop/big/github/Linkus-Server
-:let counter=[]
-:let position=[]
+":let counter=[]
+":let position=[]
 :map <Backspace> X
 ":map ≥ :!(cd ~/Dropbox/Latex && latex -shell-escape main && bibtex main && latex -shell-escape main && makeindex -s nomencl.ist -t "main.nlg" -o "main.nls" "main.nlo"&& pdflatex -shell-escape main && open -a '/Applications/Skim.app' main.pdf)<CR><CR>
-:map ≥ <Plug>MarkdownPreview
+":map ≥ <Plug>MarkdownPreview
 ":map ≤ :!(cd ~/Dropbox/Latex && pdflatex -shell-escape main && open -a '/Applications/Skim.app' main.pdf)<CR><CR>
 ":map ≤ :!(pdflatex --synctex=1 -shell-escape main && open main.pdf && cp main.pdf ~/Desktop)<CR><CR>
 
@@ -121,7 +122,7 @@ set nu
 ":map \ 
 ":map \ gf<CR>
 
-:map œ :execute 'source ' . local_path . '/change.vim'<CR>
+":map œ :execute 'source ' . local_path . '/change.vim'<CR>
 
 :map <D-Bslash> /src=\\|href=\\|<r><CR>
 
@@ -137,18 +138,18 @@ set nu
 ":map ≈ :execute "!(/usr/bin/open -a '/Applications/Google Chrome.app' 'http://127.0.0.1:8000')"<CR><CR>
 :map ª :execute "!(/usr/bin/open -a '/Applications/Google Chrome.app' '@@/index.html')"<CR><CR>
 :map å :cd %:p:h<CR>
-:map • :e @@/API.js<CR>
+":map • :e @@/API.js<CR>
 ":map œ :source ~/Dropbox/Latex/readme.md<CR>
 :map ¢ :source test.vim<CR>
-:map º :cd @/MAT<CR>
+":map º :cd @/MAT<CR>
 
 :map ¡ :execute 'e ' . local_path . '/readme.md'<CR>
-:map £ :execute 'e ' . local_path . '/Jobs/prof.md'<CR>
-:map ¢ :execute 'e ' . local_path . '/Jobs/postdoc.md'<CR>
-:map ∞ :execute 'e ' . local_path . '/../website/honeymath.github.io/README.md'<CR>
-:map § :execute 'e ' . local_path . '/Berkeley/README.md'<CR>
-:map • :execute 'e ' . 'list.md'<CR>
-:map ™ :execute 'e ' . 'markdown/Diary.md'<CR>Gzz
+":map £ :execute 'e ' . local_path . '/Jobs/prof.md'<CR>
+":map ¢ :execute 'e ' . local_path . '/Jobs/postdoc.md'<CR>
+":map ∞ :execute 'e ' . local_path . '/../website/honeymath.github.io/README.md'<CR>
+":map § :execute 'e ' . local_path . '/Berkeley/README.md'<CR>
+":map • :execute 'e ' . 'list.md'<CR>
+":map ™ :execute 'e ' . 'markdown/Diary.md'<CR>Gzz
 :map ÷ :execute '!rm ' . local_path . '/main.aux'<CR>:execute '!rm ' . local_path . '/main.toc'<CR>:execute '!rm ' . local_path . '/main.bbl'<CR>
 
 :map … /\\a\(\\\\|{\)<CR>
