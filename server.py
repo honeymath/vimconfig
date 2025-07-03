@@ -1,111 +1,133 @@
-#!/usr/bin/env python3
 import socket
-import os
+import threading
 import json
 import uuid
-import threading
-import signal
-import sys
+import os
 
-SOCKET_PATH = os.path.join(os.path.dirname(__file__), "vimsocket")
-
-class VimSocketServer:
-    def __init__(self, socket_path=SOCKET_PATH):
-        self.socket_path = socket_path
-        self.sock = None
-        self.running = False
-
-    def cleanup_socket_file(self):
-        if os.path.exists(self.socket_path):
-            try:
-                os.unlink(self.socket_path)
-            except Exception as e:
-                print(f"Failed to remove existing socket: {e}")
-                raise
-
-    def start(self):
-        self.cleanup_socket_file()
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-#        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        self.sock.bind(self.socket_path)
-#        self.sock.bind(("127.0.0.1",8765))
-        self.sock.listen(1)
+class Client:
+    def __init__(self, conn, client_id, server):
+        self.conn = conn
+        self.client_id = client_id
+        self.server = server
+        self.buffer = ""
         self.running = True
-        print(f"VimSocketServer listening at {self.socket_path}")
-        
-        threading.Thread(target=self.accept_loop, daemon=True).start()
+        self.task_results = {}  # task_id -> result
+        self.task_locks = {}    # task_id -> threading.Event
 
-    def accept_loop(self):
-        while self.running:
-            conn, _ = self.sock.accept()
-            print(f"Client connected with conn={conn.fileno()} and conn= {conn}")
-            threading.Thread(target=self.handle_client, args=(conn,), daemon=True).start()
+        # 注册 client
+        self.server.clients[client_id] = self
+        print(f"Client {client_id} registered.")
 
-    def handle_client(self, conn):
-        import time
-        time.sleep(2)
-        self.send_task(conn, "run_python_vim_script", "helloworld", {"mode": "test"})
-        try:
-            buffer = ""
-            while self.running:
-                data = conn.recv(4096)
-                if not data:
-                    break
-                buffer += data.decode()
-                while "\n" in buffer:
-                    line, buffer = buffer.split("\n", 1)
-                    self.handle_response(conn, line)
-        finally:
-            conn.close()
-            print("Client disconnected.")
+        # 启动接收线程
+        self.recv_thread = threading.Thread(target=self.recv_loop, daemon=True)
+        self.recv_thread.start()
 
-    def handle_response(self, conn, line):
-        try:
-            msg = json.loads(line)
-            print(f"Received from {conn.fileno()}: {json.dumps(msg, indent=2)}")
-        except json.JSONDecodeError as e:
-            print(f"Invalid JSON from {conn.fileno()}: {e}")
+        ### the following is a testing
+        # Example task to test the server
+        #import time
+        #time.sleep(2)
+        #print(self.send_task("run_python_vim_script", "helloworld", {"mode": "test"}))
 
-    def send_task(self, conn, command, target, args):
+    def send_task(self, command, target, args, task_id=None):
+        if not task_id:
+            task_id = str(uuid.uuid4())
+        if task_id in self.task_locks:
+            raise ValueError(f"Task ID {task_id} is already in use!")
 
-        task_id = str(uuid.uuid4())
-        data = {
+        event = threading.Event()
+        self.task_locks[task_id] = event
+
+        msg = {
             "command": command,
             "target": target,
             "args": args,
             "task_id": task_id
         }
-        line = json.dumps([0,data]) + "\n"
-        conn.sendall(line.encode())
-        print("Sending line:", repr(line))
-        print(f"Sent task {task_id} -> {target}")
-        return task_id
+        line = json.dumps([0,msg]) + "\n"
+        self.conn.sendall(line.encode())
+
+        print(f"Task {task_id} sent to {self.client_id}")
+
+        event.wait()
+
+        result = self.task_results.pop(task_id, None)
+        self.task_locks.pop(task_id, None)
+        return result
+
+    def recv_loop(self):
+        try:
+            while self.running:
+                data = self.conn.recv(4096)
+                if not data:
+                    break
+                self.buffer += data.decode()
+                while '\n' in self.buffer:
+                    line, self.buffer = self.buffer.split('\n', 1)
+                    self.handle_response(line)
+        except Exception as e:
+            print(f"Error in recv_loop of {self.client_id}: {e}")
+        finally:
+            self.close()
+
+    def handle_response(self, line):
+        try:
+            msg = json.loads(line)
+            task_id = msg.get("task_id")
+            if task_id and task_id in self.task_locks:
+                self.task_results[task_id] = msg
+                self.task_locks[task_id].set()
+            else:
+                print(f"Unexpected or unknown task_id: {task_id}")
+        except Exception as e:
+            print(f"Failed to handle response: {e}")
+
+    def close(self):
+        if self.running:
+            self.running = False
+            try:
+                self.conn.close()
+            except:
+                pass
+            if self.client_id in self.server.clients:
+                del self.server.clients[self.client_id]
+                print(f"Client {self.client_id} unregistered.")
+
+class VimSocketServer:
+    def __init__(self, socket_path=None):
+        if not socket_path:
+            socket_path = os.path.join(os.path.dirname(__file__), "vimsocket")
+        self.socket_path = socket_path
+        self.sock = None
+        self.clients = {}
+        self.next_client_id = 1
+        self.running = True
+
+    def start(self):
+        if os.path.exists(self.socket_path):
+            os.unlink(self.socket_path)
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.sock.bind(self.socket_path)
+        self.sock.listen()
+        print(f"Second server listening at {self.socket_path}")
+
+        while self.running:
+            conn, _ = self.sock.accept()
+            client_id = f"client-{self.next_client_id}"
+            self.next_client_id += 1
+            Client(conn, client_id, self)
 
     def stop(self):
         self.running = False
         if self.sock:
             self.sock.close()
-        self.cleanup_socket_file()
-        print("Server stopped cleanly.")
+        if os.path.exists(self.socket_path):
+            os.unlink(self.socket_path)
+        print("Second server stopped.")
 
-def main():
-    server = VimSocketServer()
-
-    def cleanup(*_):
-        server.stop()
-        sys.exit(0)
-
-    signal.signal(signal.SIGINT, cleanup)
-    signal.signal(signal.SIGTERM, cleanup)
-
-    server.start()
-
-    try:
-        while True:
-            pass
-    except KeyboardInterrupt:
-        cleanup()
+server = VimSocketServer()
 
 if __name__ == "__main__":
-    main()
+    try:
+        server.start()
+    except KeyboardInterrupt:
+        server.stop()
