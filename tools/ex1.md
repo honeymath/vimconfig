@@ -50,6 +50,8 @@ is in fact in the strict sense shold be
 
 The context block is designed to carry the content and carry the conversation with AI. In principle,  either ai block or see block can not contain content and conversation history, ai block or see block can only contain a sequence of context blocks.
 
+> Important note: The context block in this example is only explainatory to understand the structure and grammar, and we would never implement it in the parser, note that we use the escape sign '>' to avoid the parser confusing it. We assume the user never write context block.
+
 In the case that ai block or see block contains multiple context blocs, for example, in principle, the following structure
 
 > ```ai:prompt
