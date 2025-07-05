@@ -60,7 +60,12 @@ class Node:
 
     def update(self, node):
         self.children[-1].eat_child(node.children[0])
-        self.children[-1].kidnap_children(node.children[1:])
+        if node.children[1:]:
+            if self.type == children[-1].type:
+                self.kidnap_children(node.children[1].children) ## combine in case of same status
+                self.kidnap_children(node.children[2:])
+            else:
+                self.kidnap_children(node.children[1:])
 
 # 🌟 DefaultStack 按小主设计
 class DefaultStack:
@@ -147,6 +152,7 @@ class Parser:
         old_state, self.state = self.state, type
         if self.state == 'end':
             self.stack.pop()
+            self.state = self.stack[-1].type ## state reverse.
         elif self.state == 'watch':
             self.stack.append(self.stack[-1].new_non_context_child(type='watch', metadata={type: metadata}))
         elif self.state == old_state:
