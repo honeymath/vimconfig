@@ -1,86 +1,63 @@
 import re
 import patterns
-
-# 🐾 初始化
-root = {'type': 'root', 'header': '', 'children': [], 'content': [], 'metadata': {}}
-stack = [root]
-
-# 🐾 编译模式
+from defaultstack import DefaultStack
+class Node:
+    def __init__(self, type, content=[], metadata=[]):
+        self.type = type
+        self.children = []
+        self.content = content 
+        self.metadata = metadata
+stack = DefaultStack(Node)
+state = ""
+# 🐾 编译模式 the block escape meta can be combined
 compiled_escape = re.compile(patterns.ESCAPE_PATTERN)
 compiled_block = {k: re.compile(v) for k, v in patterns.BLOCK_PATTERNS.items()}
 compiled_meta = {k: re.compile(v) for k, v in patterns.META_PATTERNS.items()}
 compiled_oneline = {k: re.compile(v) for k, v in patterns.ONELINE_PATTERNS.items()}
 compiled_inline = {k: re.compile(v) for k, v in patterns.INLINE_PATTERNS.items()}
+# 🐾 辅助函数
+def handle_block_match(k, m):
+    oldstate,state = state,k
+    if state == 'end':
+        stack.pop()
+    elif state == 'watch':
+        stack.push(Node(type='watch', metadata=m.groupdict()))
+    elif state == oldstate:
+        stack[-1]['children'].append(Node(type='context', metadata=m.groupdict()))
+    else: 
+        stack.push(Node(type='watch'),metadata=m.groupdict())
 
+def reverse_handle_block_match(k, m):
+    oldstate, state = state, k
+    if state == 'end':
+        stack.push(Node(type='end', metadata=m.groupdict()))
+    elif state == 'watch':
+        stack[-1].type = 'watch'
+        ### then I have to write the metadata
+        stack.pop()
+    elif state == oldstate or oldstate == 'end':
+        stack[-1]['children'].append(Node(type='context', metadata=m.groupdict()))
+        return
+    else:
+        giveme = stack[-1]['children'].pop()
+        stack[-1].type = oldstate
+        stack.pop()
+        stack[-1]['children'].append(giveme) ## need mathematical proof stack[-1] always exists.
 
 # 🐾 主函数骨架
-def parse(lines,extra_end_callback=None):
-    for line in lines:
-        line = line.rstrip('\n')
-        
-        # 检查 escape
-        if compiled_escape.match(line):
-            stack[-1]['content'].append(line.lstrip(patterns.escape_char).strip())  ## what ? why not just append line, why strip ?
-            continue
-        
-        # 检查 end
-        if compiled_block.get('end') and compiled_block['end'].match(line):
-            if len(stack) > 1:
-                stack.pop()
-            else:
-                print("⚠️ 多余的 end 被忽略") ## no, here just do some callback. I have added a extra_end_callback parameter to parse function.
-            continue
-        
-        # 检查 block
-        matched = False
-        for k, regex in compiled_block.items():
-            if k == 'end':
-                continue
-            m = regex.match(line)
-            if m:
-                # TODO: 新建 node 并入栈（watch 特殊处理）
-                matched = True
-                break
-        if matched:
-            continue
-        
-        # 检查 metadata
-        for k, regex in compiled_meta.items():
-            m = regex.match(line)
-            if m:
-                # TODO: 更新当前 node metadata
-                matched = True
-                break
-        if matched:
-            continue
-
-        # 检查 oneline block
-        for k, regex in compiled_oneline.items():
-            m = regex.search(line)
-            if m:
-                # TODO: 新建 oneline node，直接挂到当前栈顶
-                matched = True
-                break
-        if matched:
-            continue
-        
-        
-        # 检查 inline
-        # TODO: 根据当前模式检查 inline 匹配并生成子 node
-        
-        # 普通内容
-        stack[-1]['content'].append(line)
-    
-    if len(stack) > 1:
-        print("⚠️ 有未闭合的块")
-    return root
-
-# 🐾 示例入口
-def main():
-    with open('test.md', 'r') as f:
-        lines = f.readlines()
-    tree = parse(lines)
-    print(tree)
-
-if __name__ == '__main__':
-    main()
+def parse(line):#only parse one line
+    line = line.rstrip('\n')
+    if compiled_escape.match(line):#escape
+        stack[-1].children[-1].content.append(line)
+        return
+    for k, regex in compiled_block.items():#block match and meta, need matching groups 1.
+        if(m:= regex.search(line)):
+            handle_block_match(k, m.group(1), stack)
+            return
+    for k, regex in compiled_oneline.items():#oneline match, matching groups 1.
+        if(m:= regex.search(line)):
+            stack[-1].children.append(Node(type=k, metadata={k:m.group(1)}))# oneline match
+            return
+    for match in compiled_inline["ai"].match.groups(line): ## only match ai, not others.
+        stack[-1].children[-1].content.append(Node(type="ai"))
+    stack[-1].children[-1].content.append(line)#non-match
