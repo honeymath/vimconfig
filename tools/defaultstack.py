@@ -14,7 +14,7 @@ class DefaultStack:
     def generate(self):
         new_value = self.default_factory()
         self._history.append(new_value)
-        self._data.prepend(new_value)
+        self._data.insert(0,new_value)
     def __getitem__(self, index):
         if index >= 0:
             raise IndexError("Index must be negative for DefaultStack.")
