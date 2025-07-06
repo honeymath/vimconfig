@@ -13,6 +13,12 @@ class Node:
         if self.type != 'context':
             self.new_context_child()
 
+    def reverse(self):
+        self.children.reverse()
+        self.metadata = {k: v[::-1] for k, v in self.metadata.items()}
+        for child in self.children:
+            child.reverse()
+
     def to_dict(self):
         return {
             'type': self.type,
@@ -51,7 +57,8 @@ class Node:
 
     def eat_child(self, child):
         if child.type != 'context':
-            raise Exception('who is your daddy!')
+            return
+#            raise Exception('who is your daddy!')
         self.children[-1].content.extend(child.content)
         for k, v_list in child.metadata.items():
             self.children[-1].metadata[k].extend(v_list)
@@ -60,13 +67,12 @@ class Node:
         self.children.extend(children)
 
     def update(self, node):
-        self.children[-1].eat_child(node.children[0])
-        if node.children[1:]:
-            if self.type == children[-1].type:
-                self.kidnap_children(node.children[1].children) ## combine in case of same status
-                self.kidnap_children(node.children[2:])
+        self.eat_child(node.children[0])
+        for child in node.children[1:]:
+            if self.type == child.type:
+                self.kidnap_children(child.children)
             else:
-                self.kidnap_children(node.children[1:])
+                self.kidnap_children([child])
 
 # 🌟 DefaultStack 按小主设计
 class DefaultStack:
@@ -148,7 +154,7 @@ class Parser:
 
     def handle_block_match(self, type, metadata, line):
         if type in self.META:
-            self.stack[-1].add_metadata({type: metadata})
+            self.stack[-1].children[-1].add_metadata({type: metadata})
             return
         old_state, self.state = self.state, type
         if self.state == 'end':
@@ -156,15 +162,17 @@ class Parser:
             self.state = self.stack[-1].type ## state reverse.
             self.stack[-1].new_context_child(metadata={type: metadata})
         elif self.state == 'watch':
-            self.stack.append(self.stack[-1].new_non_context_child(type='watch', metadata={type: metadata}))
+            self.stack.append(self.stack[-1].new_non_context_child(type='watch'))
+            self.stack[-1].children[-1].add_metadata({type: metadata})
         elif self.state == old_state:
             self.stack[-1].new_context_child(metadata={type: metadata})
         else:
-            self.stack.append(self.stack[-1].new_non_context_child(type=self.state, metadata={type: metadata}))
+            self.stack.append(self.stack[-1].new_non_context_child(type=self.state))
+            self.stack[-1].children[-1].add_metadata({type: metadata})
 
     def reverse_handle_block_match(self, type, metadata, line):
         if type in self.META:
-            self.stack[-1].add_metadata({type: metadata})
+            self.stack[-1].children[-1].add_metadata({type: metadata})
             return
         old_state, self.state = self.state, type
         #from now on, the selfstate is the current type
@@ -173,9 +181,9 @@ class Parser:
             return
         elif self.state == 'watch':
             self.stack[-1].type = self.state
-            self.stack[-1].add_metadata({type: metadata})
+            self.stack[-1].children[-1].add_metadata({type: metadata})
             self.stack.pop()
-            self.stack[-1].new_context_child(metadata={type: metadata})## everytime pop, create a context.
+            self.stack[-1].new_context_child(metadata={})## everytime pop, create a context, without fucking metadata.
             self.state = self.stack[-1].type  # remembers the state
             return
         ##from now on ,the coming state must be ai or see.
@@ -185,7 +193,8 @@ class Parser:
             self.stack.pop()
             old_state = self.stack[-1].type
         self.stack[-1].kidnap_children(Orphanage)  
-        self.stack[-1].new_context_child(metadata={type: metadata})
+        self.stack[-1].children[-1].add_metadata({type: metadata})
+        self.stack[-1].new_context_child(metadata={})## remember no fucking metadata
         self.stack[-1].type = self.state
         ### now modify the state based on the old state of courses.
             ## have to remember the state but do not use the remembered state to cover the state.
@@ -248,61 +257,64 @@ class Parser:
         return TYPE, type_, metadata, restline
 
 if __name__ == '__main__':
-#    parser = Parser(mode='normal')
-    parser = Parser(mode='reverse')
+    parser = Parser(mode='normal')
+    resrap = Parser(mode='reverse')
     parser.set_syntax_chars(comment_char='#', escape_char='##')
+    resrap.set_syntax_chars(comment_char='#', escape_char='##')
     test_cases = [
-            "##Escape test",
-            "#ai: one",
-            "context1",
-            "#watch: causion",
-            "context2",
-            "#end",
-            "context3",
-            "#ai: one again",
-            "context4",
-            "#see: two",
-            "context5",
-            "context5",
-            "context5",
-            "context5",
-            "#end",
-            "context6",
-            "#ai:one again again",
-            "context7",
-            "#end",
-            "context8",
-            "context8",
-            "context8",
-            "context8",
-            "context8",
-            "context8",
-            "#watch: do I need to watch?",
-            "context9",
-            "context9",
-            "context9",
-            "context9",
-            "#watch: I am watching again",
-            "context10",
-            "context10",
-            "context10",
-            "#end",
-            "context11",
-            "context11",
-            "context11",
-            "#end",
-            "context12",
-            "context12",
+        "#ai:",
+        "#see:",
+        "#ai:",
+        "fuck0",
+        "fuck1",
+        "fuck2",
+        "fuck3",
+        "fuck4",
+        "fuck5",
+        "fuck6",
+        "fuck7",
+        "fuck8",
+        "fuck9",
+        "#end",
+        "#end",
+        "#end"
     ]
-    test_cases = test_cases[::-1]  # Reverse the test cases for reverse mode
+#    test_cases = test_cases[::-1]  # Reverse the test cases for reverse mode
 
-    for i, line in enumerate(test_cases, 1):
-        print(f"Test {i}: {line}")
+    cursor = 5
+    for i, line in enumerate(test_cases[cursor:]):
+#        print(f"Test {i}: {line}")
         TYPE, type_, metadata, restline = parser.parse(line)
-        print(f"  Type: {TYPE}\n Block Type: {type_}\n Metadata: {metadata}\n Rest Line: '{restline}'")
-        print(f"  Stack depth: {parser.stack.len()}")
-        print(f"  Current node type: {parser.stack[-1].type}")
-        print("-" * 40)
-    parser.reverse_handle_block_match('', {}, '')# this is the init line
-    if (l:=parser.stack.len() >=0):
-        print(parser.stack[-l].to_json(indent=2))
+#        print(f"  Type: {TYPE}\n Block Type: {type_}\n Metadata: {metadata}\n Rest Line: '{restline}'")
+#        print(f"  Stack depth: {parser.stack.len()}")
+#        print(f"  Current node type: {parser.stack[-1].type}")
+#        print("-" * 40)
+#    parser.reverse_handle_block_match('', {}, '')# this is the init line
+    for i, line in enumerate(test_cases[cursor-1::-1]):
+        TYPE, type_, metadata, restline = resrap.parse(line)
+    resrap.reverse_handle_block_match('', {}, '')  # this is the init line
+#    if (l:=parser.stack.len() >=0):
+#        print(parser.stack[-l].to_json(indent=2))
+#    else:
+#        for ind,x in enumerate(parser.stack._history):
+#            print(f"History {ind}: {x.to_json(indent=2)}")
+#            print("-"*40)
+    history = resrap.stack._history
+    future = parser.stack._history
+    freedom = None
+    counter = 0
+    for regret,hope in list(zip(history,future))[::-1]:
+        print("current",counter)
+        counter+=1
+        if freedom:
+            regret.giveback_child(freedom)
+#        print("--" * 40)
+#        print("regret", regret.to_json(indent=2))
+#        print("--" * 40)
+#        print("hope", hope.to_json(indent=2))
+        for child in regret.children:
+            print(child.to_json(indent=2))
+        regret.update(hope)
+        freedom = regret
+        print("current freedom", freedom.to_json(indent=2))
+    #print(freedom.to_json(indent=2))
