@@ -167,7 +167,7 @@ class Parser:
             self.stack[-1].add_metadata({type: metadata})
             return
         old_state, self.state = self.state, type
-        if self.state == 'end':
+        if self.state == 'end': ## it has ignore the previous fuck
             self.stack.append(self.stack[-1].new_non_context_child(type='end', metadata={type: metadata}))
         elif self.state == 'watch':
             self.stack[-1].type = self.state
