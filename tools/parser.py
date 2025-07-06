@@ -64,8 +64,11 @@ class Node:
 
     def add_inline_children(self, type, line, groups):
         child = self.new_non_context_child(type='inline')
+        if type:
+            child.add_metadata({"inlinetype":type})
         for group in groups:
             child.new_non_context_child(type=type, metadata={'group': group})
+        self.new_context_child() ## I have added for fucking safty you know?
 
     def eat_child(self, child):
         if child.type != 'context':
@@ -82,11 +85,13 @@ class Node:
 
     def update(self, node):
         self.eat_child(node.children[0])
-        for child in node.children[1:]:
-            if self.type == child.type:
-                self.kidnap_children(child.children)
-            else:
-                self.kidnap_children([child])
+        node.children = node.children[1:]  # Remove the first child which is context
+        while node.children and node.children[0].type != self.type:
+            self.kidnap_children([node.children[0]])
+            node.children = node.children[1:]  # Remove the first child
+        if node.children and node.children[0].type == self.type:
+            self.kidnap_children(node.children[0].children)
+            node.children = node.children[1:]
 
 # 🌟 DefaultStack 按小主设计
 class DefaultStack:
@@ -266,11 +271,12 @@ class Parser:
             else:
                 self.handle_block_match(type_, metadata[type_], line)
         elif TYPE == "ONELINE":
-            child = self.stack[-1].new_non_context_child(type=type_, metadata={type_: metadata["prompt"]})
-            for g in metadata["groups"]:
-                child.new_non_context_child(type="ai", metadata={"group": g})
+            self.stack[-1].add_inline_children(type=type_, line=line, groups=metadata["groups"])
+#            child = self.stack[-1].new_non_context_child(type=type_, metadata={type_: metadata["prompt"]})
+#            for g in metadata["groups"]:
+#                child.new_non_context_child(type="ai", metadata={"group": g})
         elif TYPE == "INLINE":
-            self.stack[-1].add_inline_children(type="ai", line=line, groups=metadata["groups"])
+            self.stack[-1].add_inline_children(type=None, line=line, groups=metadata["groups"])
         return TYPE, type_, metadata, restline
 
 if __name__ == '__main__':
@@ -279,32 +285,21 @@ if __name__ == '__main__':
     parser.set_syntax_chars(comment_char='#', escape_char='##')
     resrap.set_syntax_chars(comment_char='#', escape_char='##')
     test_cases = [
-        "tag0",
-        "#ai:1",
-        "tag1",
-        "#see:2",
-        "tag2",
-        "#ai:3",
-        "fuck0",
-        "fuck1",
-        "ai:f2",
-        "fuck3",
-        "fuck4",
-        "#ai:f5",
-        "fuck6",
-        "fuck7",
-        "fuck8",
-        "fuck9",
+        "#ai:rinima0",
+        "inline __ test __ and __ fuck #see: you fuck?",
+        "this is not inline",
+        "#ai:rinima1",
+        "fuck __ you __ for __ ever #ai: don't believe me",
+        "this fucked",
+        "#ai:rinima2",
+        "fuck you __ is a good dream and I would like do it",
+        "#ai:rinima3",
+        "I have nothing to say",
         "#end",
-        "rinima1",
-        "#end",
-        "rinima2",
-        "#end",
-        "rinima3",
     ]
 #    test_cases = test_cases[::-1]  # Reverse the test cases for reverse mode
 
-    cursor = 14
+    cursor = 4
     parser.stack[-1].new_context_child(metadata={})  # This is SOF the init line mother fucker!!!!
     for i, line in enumerate(test_cases[cursor:]):
 #        print(f"Test {i}: {line}")
@@ -352,9 +347,30 @@ if __name__ == '__main__':
 
 
 
+#    fufu = future[::-1]
+#    for regret in history:
+#        now = fufu.pop()
+ #       regret.reverse()
+#        while now.children:
+#            regret.update(now)
+ 
+    huhu = history[::-1]
+    for hope in future:
+        while hope.children:
+            regret = huhu.pop()
+            regret.reverse()
+            if freedom:
+                regret.giveback_child(freedom)
+                regret.new_context_child(metadata={}) ## using to absorb fuck.
+            regret.update(hope)
+            freedom = regret
+            print(f"freedom: {freedom.to_json(indent = 2)}")
+            print("-"*40)
+    
 
 
 
+"""
     for regret,hope in list(zip(history,future)):
         print("current",counter)
         counter+=1
@@ -373,4 +389,4 @@ if __name__ == '__main__':
         print("current freedom", freedom.to_json(indent=2))
         print("-" * 40)
 #    print(freedom.to_json(indent=2))
-
+"""
