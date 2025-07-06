@@ -3,13 +3,15 @@ from collections import defaultdict
 import json
 # 🌟 Node 数据结构
 class Node:
-    def __init__(self, type, content=None, metadata=None):
+    def __init__(self, type="", content=None, metadata=None):
         self.type = type
         self.children = []
         self.content = content if content else []
         self.metadata = defaultdict(list)
         if metadata:
             self.add_metadata(metadata)
+        if self.type != 'context':
+            self.new_context_child()
 
     def to_dict(self):
         return {
@@ -33,7 +35,6 @@ class Node:
 
     def new_non_context_child(self, type='', metadata=None):
         child = Node(type=type, metadata=metadata)
-        child.new_context_child()
         self.children.append(child)
         return child
 
@@ -127,7 +128,7 @@ class Parser:
             'end': 'end()$',
         }
         self.compile_patterns()
-        self.stack = DefaultStack(lambda: Node(type='root'))
+        self.stack = DefaultStack(Node)
         self.state = ""
         self.mode = mode  # 'normal' or 'reverse'
 
@@ -153,6 +154,7 @@ class Parser:
         if self.state == 'end':
             self.stack.pop()
             self.state = self.stack[-1].type ## state reverse.
+            self.stack[-1].new_context_child(metadata={type: metadata})
         elif self.state == 'watch':
             self.stack.append(self.stack[-1].new_non_context_child(type='watch', metadata={type: metadata}))
         elif self.state == old_state:
@@ -234,21 +236,40 @@ class Parser:
         return TYPE, type_, metadata, restline
 
 if __name__ == '__main__':
-    parser = Parser(mode='normal')
+#    parser = Parser(mode='normal')
+    parser = Parser(mode='reverse')
     parser.set_syntax_chars(comment_char='#', escape_char='##')
     test_cases = [
             "##Escape test",
             "#ai: one",
             "#date:2025-01-01",
             "#name:good",
+            "Context1",
             "#watch: causion",
+            "Context2",
             "#end",
+            "Context3",
+            "Context4",
             "#ai: one again",
+            "Context5",
+            "Context6",
             "#see: two",
+            "Context7",
             "#end",
             "#ai:one again again",
             "#end",
+            "Another Content",
+            "Second another content",
+            "#watch: do I need to watch?",
+            "Yes you neda watch",
+            "So do I",
+            "#watch: I am watching again",
+            "What are you fooking watching?",
+            "#end",
+            "#end",
+            "Some ending words",
     ]
+    test_cases = test_cases[::-1]  # Reverse the test cases for reverse mode
 
     for i, line in enumerate(test_cases, 1):
         print(f"Test {i}: {line}")
