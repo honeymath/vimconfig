@@ -169,12 +169,13 @@ class Parser:
         old_state, self.state = self.state, type
         #from now on, the selfstate is the current type
         if self.state == 'end': ## it has ignore the previous fuck
-            self.stack.append(self.stack[-1].new_non_context_child(type='end', metadata={type: metadata}))
+            self.stack.append(self.stack[-1].new_non_context_child(type='end', metadata={}))
             return
         elif self.state == 'watch':
             self.stack[-1].type = self.state
             self.stack[-1].add_metadata({type: metadata})
             self.stack.pop()
+            self.stack[-1].new_context_child(metadata={type: metadata})## everytime pop, create a context.
             self.state = self.stack[-1].type  # remembers the state
             return
         ##from now on ,the coming state must be ai or see.
@@ -253,17 +254,45 @@ if __name__ == '__main__':
     test_cases = [
             "##Escape test",
             "#ai: one",
+            "context1",
             "#watch: causion",
+            "context2",
             "#end",
+            "context3",
             "#ai: one again",
+            "context4",
             "#see: two",
+            "context5",
+            "context5",
+            "context5",
+            "context5",
             "#end",
+            "context6",
             "#ai:one again again",
+            "context7",
             "#end",
+            "context8",
+            "context8",
+            "context8",
+            "context8",
+            "context8",
+            "context8",
             "#watch: do I need to watch?",
+            "context9",
+            "context9",
+            "context9",
+            "context9",
             "#watch: I am watching again",
+            "context10",
+            "context10",
+            "context10",
             "#end",
+            "context11",
+            "context11",
+            "context11",
             "#end",
+            "context12",
+            "context12",
     ]
     test_cases = test_cases[::-1]  # Reverse the test cases for reverse mode
 
@@ -274,5 +303,6 @@ if __name__ == '__main__':
         print(f"  Stack depth: {parser.stack.len()}")
         print(f"  Current node type: {parser.stack[-1].type}")
         print("-" * 40)
+    parser.reverse_handle_block_match('', {}, '')# this is the init line
     if (l:=parser.stack.len() >=0):
         print(parser.stack[-l].to_json(indent=2))
