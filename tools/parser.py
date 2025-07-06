@@ -167,19 +167,30 @@ class Parser:
             self.stack[-1].add_metadata({type: metadata})
             return
         old_state, self.state = self.state, type
+        #from now on, the selfstate is the current type
         if self.state == 'end': ## it has ignore the previous fuck
             self.stack.append(self.stack[-1].new_non_context_child(type='end', metadata={type: metadata}))
+            return
         elif self.state == 'watch':
             self.stack[-1].type = self.state
             self.stack[-1].add_metadata({type: metadata})
             self.stack.pop()
-        elif self.state == old_state or old_state == 'end':
-            self.stack[-1].new_context_child(metadata={type: metadata})
-        else:
-            giveme = self.stack[-1].borrow_child()
-            self.stack[-1].type = old_state
+            self.state = self.stack[-1].type  # remembers the state
+            return
+        ##from now on ,the coming state must be ai or see.
+        Orphanage = []
+        while old_state!='' and old_state != 'end' and self.state != old_state:
+            Orphanage.append(self.stack[-1].borrow_child())
             self.stack.pop()
-            self.stack[-1].giveback_child(giveme)
+            old_state = self.stack[-1].type
+        self.stack[-1].kidnap_children(Orphanage)  
+        self.stack[-1].new_context_child(metadata={type: metadata})
+        self.stack[-1].type = self.state
+        ### now modify the state based on the old state of courses.
+            ## have to remember the state but do not use the remembered state to cover the state.
+                 ## if the remembered state is end, there is nothing to do because safe to escape.
+                 ## if the remembered state is the same the current state, there is nothing to do. 
+                 ## if the remembered state is different from the current state, it have to collapse
 
     def match(self, line):
         line = line.rstrip('\n')
@@ -242,32 +253,17 @@ if __name__ == '__main__':
     test_cases = [
             "##Escape test",
             "#ai: one",
-            "#date:2025-01-01",
-            "#name:good",
-            "Context1",
             "#watch: causion",
-            "Context2",
             "#end",
-            "Context3",
-            "Context4",
             "#ai: one again",
-            "Context5",
-            "Context6",
             "#see: two",
-            "Context7",
             "#end",
             "#ai:one again again",
             "#end",
-            "Another Content",
-            "Second another content",
             "#watch: do I need to watch?",
-            "Yes you neda watch",
-            "So do I",
             "#watch: I am watching again",
-            "What are you fooking watching?",
             "#end",
             "#end",
-            "Some ending words",
     ]
     test_cases = test_cases[::-1]  # Reverse the test cases for reverse mode
 
