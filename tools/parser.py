@@ -287,10 +287,10 @@ if __name__ == '__main__':
         "#ai:3",
         "fuck0",
         "fuck1",
-        "fuck2",
+        "ai:f2",
         "fuck3",
         "fuck4",
-        "fuck5",
+        "#ai:f5",
         "fuck6",
         "fuck7",
         "fuck8",
@@ -304,7 +304,7 @@ if __name__ == '__main__':
     ]
 #    test_cases = test_cases[::-1]  # Reverse the test cases for reverse mode
 
-    cursor = 9
+    cursor = 14
     parser.stack[-1].new_context_child(metadata={})  # This is SOF the init line mother fucker!!!!
     for i, line in enumerate(test_cases[cursor:]):
 #        print(f"Test {i}: {line}")
