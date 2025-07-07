@@ -62,13 +62,24 @@ class Node:
     def giveback_child(self, child):
         self.children.append(child)
 
-    def add_inline_children(self, type, line, groups):
-        child = self.new_non_context_child(type='inline')
+#    def add_inline_children(self, type, line, groups):
+#        child = self.new_non_context_child(type='inline')
+#        if type:
+#            child.add_metadata({"inlinetype":type})
+#        for group in groups:
+#            child.new_non_context_child(type=type, metadata={'group': group})
+#        self.new_context_child() 
+
+    def add_inline_children(self, type=None, line='', groups=[], prompt= ''):
+        child = self.new_context_child()
+        meta = {}
         if type:
-            child.add_metadata({"inlinetype":type})
-        for group in groups:
-            child.new_non_context_child(type=type, metadata={'group': group})
-        self.new_context_child() ## I have added for fucking safty you know?
+            meta[type] = prompt
+        meta['groups'] = groups
+        child.add_metadata(meta)
+        child.content.append(line)
+        self.new_context_child()  # Create a new context child for the next inline contentc
+         ### stopped writing here
 
     def eat_child(self, child):
         if child.type != 'context':
@@ -247,14 +258,16 @@ class Parser:
             regex = self.INLINE_PATTERNS.get("ai")
             if regex and (mm := regex.search(restline)):
                 groups = [mm.group(2)]
+                print(f"Groups found: {groups}")
             metas = {"prompt": prompt, "groups": groups}
             return "ONELINE", type_, metas, restline
 
-        regex = self.INLINE_PATTERNS.get("ai")
-        if regex and (mm := regex.search(line)):
-            groups = [mm.group(2)]
-            metas = {"groups": groups}
-            return "INLINE", "", metas, line
+# Effective July 7, 2025, disable inline patterns. 
+#        regex = self.INLINE_PATTERNS.get("ai")
+#        if regex and (mm := regex.search(line)):
+#            groups = [mm.group(2)]
+#            metas = {"groups": groups}
+#            return "INLINE", "", metas, line
 
         return "CONTENT", "", {}, line
 
@@ -271,12 +284,13 @@ class Parser:
             else:
                 self.handle_block_match(type_, metadata[type_], line)
         elif TYPE == "ONELINE":
-            self.stack[-1].add_inline_children(type=type_, line=line, groups=metadata["groups"])
+            self.stack[-1].add_inline_children(type=type_, line=restline, groups=metadata["groups"], prompt=metadata["prompt"])
 #            child = self.stack[-1].new_non_context_child(type=type_, metadata={type_: metadata["prompt"]})
 #            for g in metadata["groups"]:
 #                child.new_non_context_child(type="ai", metadata={"group": g})
-        elif TYPE == "INLINE":
-            self.stack[-1].add_inline_children(type=None, line=line, groups=metadata["groups"])
+# Effective July 7, 2025, disable inline patterns.
+#        elif TYPE == "INLINE":
+#            self.stack[-1].add_inline_children(type=None, line=line, groups=metadata["groups"])
         return TYPE, type_, metadata, restline
 
 if __name__ == '__main__':
@@ -285,16 +299,18 @@ if __name__ == '__main__':
     parser.set_syntax_chars(comment_char='#', escape_char='##')
     resrap.set_syntax_chars(comment_char='#', escape_char='##')
     test_cases = [
-        "#ai:rinima0",
-        "inline __ test __ and __ fuck #see: you fuck?",
-        "this is not inline",
-        "#ai:rinima1",
-        "fuck __ you __ for __ ever #ai: don't believe me",
-        "this fucked",
-        "#ai:rinima2",
-        "fuck you __ is a good dream and I would like do it",
-        "#ai:rinima3",
-        "I have nothing to say",
+        "#ai:First ai block",
+        "Content line 1",
+        "Content line 2 with inactiva inline __ ",
+        "Active line 3 with final mark #ai:do prompt",
+        "Active line 4 with inline _________ ___and___ ___a___bove should have empty content #see:some see",
+        "Normal Content line 5",
+        "Normal Content line 6",
+            "#see: inner block",
+                "Content line 7",
+                "Content line 8",
+                "active line 9 with inline __ and final mark #ai:caution",
+            "#end",
         "#end",
     ]
 #    test_cases = test_cases[::-1]  # Reverse the test cases for reverse mode
