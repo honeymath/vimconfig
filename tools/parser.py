@@ -157,8 +157,11 @@ class DefaultStack:
     def getpath(self):
         history_number = len(self._history)
         # Finish the logic of getting path
+        temp_path = [float('inf')] * (history_number)
+        for i in self._data:
+            temp_path.append(len(i.children))
         # have to use deepcopy to avoid 
-        return []
+        return temp_path
 
     def generate(self):
         new_value = self.default_factory()
