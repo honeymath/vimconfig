@@ -3,11 +3,13 @@ from collections import defaultdict
 import json
 # 🌟 Node 数据结构
 class Node:
-    def __init__(self, type="", content=[], metadata={}):
+    def __init__(self, type="", content=[], metadata={},index=0):
+        ## so adding index will take care when stack poping out.
         self.type = type
         self.children = []
         self.content = content if content else []
         self.metadata = defaultdict(list)
+        self.index = index
         if metadata:
             self.add_metadata(metadata)
 
@@ -57,46 +59,36 @@ class Node:
         return child
 
     def borrow_child(self):
-        return self.children.pop()
+        childrenlist = [self.children.pop()]
+        while childrenlist[-1].type!= "context" or (self.children and self.children[-1].type!="context"):
+            childrenlist.append(self.children.pop())
+        return childrenlist
 
     def giveback_child(self, child):
         self.children.append(child)
 
-#    def add_inline_children(self, type, line, groups):
-#        child = self.new_non_context_child(type='inline')
-#        if type:
-#            child.add_metadata({"inlinetype":type})
-#        for group in groups:
-#            child.new_non_context_child(type=type, metadata={'group': group})
-#        self.new_context_child() 
-
-    def add_inline_children(self, type=None, line='', groups=[], prompt= ''):
-        child = self.new_context_child()
+    def add_inline_children(self, type=None, line='',  prompt= ''):
+        child = self.new_context_child(type='oneline')
         meta = {}
         if type:
             meta[type] = prompt
-        meta['groups'] = groups
         child.add_metadata(meta)
         child.content.append(line)
-        self.new_context_child()  # Create a new context child for the next inline contentc
-         ### stopped writing here
+        self.new_context_child()  
 
     def eat_child(self, child):
         if child.type != 'context':
-            return
-#            raise Exception('who is your daddy!')
+            raise ValueError("Child must be of type 'context' to be eaten.")
         self.children[-1].content.extend(child.content)
         super_fucker = {rinima:bi for rinima,bi in child.metadata.items()}
         self.children[-1].add_metadata(super_fucker)
-#        for k, v_list in child.metadata.items():
-#            self.children[-1].metadata[k].extend(v_list)
 
     def kidnap_children(self, children):
         self.children.extend(children)
 
     def update(self, node):
         self.eat_child(node.children[0])
-        node.children = node.children[1:]  # Remove the first child which is context
+        node.children = node.children[1:]  
         while node.children and node.children[0].type != self.type:
             self.kidnap_children([node.children[0]])
             node.children = node.children[1:]  # Remove the first child
@@ -106,10 +98,12 @@ class Node:
 
 # 🌟 DefaultStack 按小主设计
 class DefaultStack:
-    def __init__(self, default_factory):
+    def __init__(self, default_factory, callback_index=-float('inf'), callback_function=None):
         self._data = []
         self._history = []
         self.default_factory = default_factory
+        self.callback_index = callback_index
+        self.callback_function = callback_function
 
     def push(self, value):
         self._data.append(value)
@@ -120,6 +114,9 @@ class DefaultStack:
     def pop(self):
         if not self._data:
             self.generate()
+        if self.len() == self.callback_index:
+            if self.callback_function:
+                self.callback_function(stack=self)
         return self._data.pop()
 
     def generate(self):
@@ -151,7 +148,7 @@ class DefaultStack:
 
 # 🌟 Parser 主逻辑
 class Parser:
-    def __init__(self, mode='normal'):
+    def __init__(self, mode='normal', callback_index=-float('inf'), callback_function=None):
         self.comment_char = '```'
         self.escape_char = '>'
         self.META = ['name', 'date']
@@ -164,7 +161,7 @@ class Parser:
             'end': 'end()$',
         }
         self.compile_patterns()
-        self.stack = DefaultStack(Node)
+        self.stack = DefaultStack(Node,callback_index=callback_index, callback_function=callback_function)
         self.state = ""
         self.mode = mode  # 'normal' or 'reverse'
 
@@ -180,7 +177,6 @@ class Parser:
         self.ESCAPE_PATTERN = re.compile(rf'^{self.escape_char}.*$')
         self.BLOCK_PATTERNS = {k: re.compile(rf'^{self.comment_char}{v}') for k, v in self.patterns.items()}
         self.ONELINE_PATTERNS = {k: re.compile(rf'^(.*?){self.comment_char}{v}') for k, v in self.patterns.items() if k not in self.META}
-        self.INLINE_PATTERNS = {'ai': re.compile(r'([.,;!?]|\\s)(_{2,})([.,;!?]|\\s)')}
 
     def handle_block_match(self, type, metadata, line):
         if type in self.META:
@@ -222,18 +218,13 @@ class Parser:
         ##from now on ,the coming state must be ai or see.
         Orphanage = []
         while old_state!='' and old_state != 'end' and self.state != old_state:
-            Orphanage.append(self.stack[-1].borrow_child())
+            Orphanage.extend(self.stack[-1].borrow_child())
             self.stack.pop()
             old_state = self.stack[-1].type
         self.stack[-1].kidnap_children(Orphanage)  
         self.stack[-1].children[-1].add_metadata({type: metadata})
         self.stack[-1].new_context_child(metadata={})## remember no fucking metadata
         self.stack[-1].type = self.state
-        ### now modify the state based on the old state of courses.
-            ## have to remember the state but do not use the remembered state to cover the state.
-                 ## if the remembered state is end, there is nothing to do because safe to escape.
-                 ## if the remembered state is the same the current state, there is nothing to do. 
-                 ## if the remembered state is different from the current state, it have to collapse
 
     def match(self, line):
         line = line.rstrip('\n')
@@ -255,19 +246,8 @@ class Parser:
                 break
 
         if type_:
-            regex = self.INLINE_PATTERNS.get("ai")
-            if regex and (mm := regex.search(restline)):
-                groups = [mm.group(2)]
-                print(f"Groups found: {groups}")
-            metas = {"prompt": prompt, "groups": groups}
+            metas = {"prompt": prompt}
             return "ONELINE", type_, metas, restline
-
-# Effective July 7, 2025, disable inline patterns. 
-#        regex = self.INLINE_PATTERNS.get("ai")
-#        if regex and (mm := regex.search(line)):
-#            groups = [mm.group(2)]
-#            metas = {"groups": groups}
-#            return "INLINE", "", metas, line
 
         return "CONTENT", "", {}, line
 
@@ -284,25 +264,33 @@ class Parser:
             else:
                 self.handle_block_match(type_, metadata[type_], line)
         elif TYPE == "ONELINE":
-            self.stack[-1].add_inline_children(type=type_, line=restline, groups=metadata["groups"], prompt=metadata["prompt"])
-#            child = self.stack[-1].new_non_context_child(type=type_, metadata={type_: metadata["prompt"]})
-#            for g in metadata["groups"]:
-#                child.new_non_context_child(type="ai", metadata={"group": g})
-# Effective July 7, 2025, disable inline patterns.
-#        elif TYPE == "INLINE":
-#            self.stack[-1].add_inline_children(type=None, line=line, groups=metadata["groups"])
+            self.stack[-1].add_inline_children(type=type_, line=restline, prompt=metadata["prompt"])
         return TYPE, type_, metadata, restline
 
+
+def get_element_near_cursor(history,future):
+    if not future[0]:
+        print(f"You have no fucking future!")
+        return Node()
+    elif not future[0].children:
+        print(f"You have no children!")
+        return Node()
+    elif future[0].children[0].type == "context":
+        rinima = future[0].children[0].content
+        if rinima:
+            return future[0].children[0]
+        else:
+            return future[0].children[1] if len(future[0].children) > 1 else future[0].children[0]
+
+
+
 if __name__ == '__main__':
-    parser = Parser(mode='normal')
-    resrap = Parser(mode='reverse')
-    parser.set_syntax_chars(comment_char='#', escape_char='##')
-    resrap.set_syntax_chars(comment_char='#', escape_char='##')
     test_cases = [
         "#ai:First ai block",
         "Content line 1",
         "Content line 2 with inactiva inline __ ",
-        "Active line 3 with final mark #ai:do prompt",
+        "ai:Active line 3 with final mark #ai:do prompt",
+        "#ai:Empty Line",
         "Active line 4 with inline _________ ___and___ ___a___bove should have empty content #see:some see",
         "Normal Content line 5",
         "Normal Content line 6",
@@ -313,28 +301,27 @@ if __name__ == '__main__':
             "#end",
         "#end",
     ]
-#    test_cases = test_cases[::-1]  # Reverse the test cases for reverse mode
 
-    cursor = 4
+    cursor = 12
+
+
+### The future parser running.
+    parser = Parser(mode='normal')
+    parser.set_syntax_chars(comment_char='#', escape_char='##')
+
     parser.stack[-1].new_context_child(metadata={})  # This is SOF the init line mother fucker!!!!
     for i, line in enumerate(test_cases[cursor:]):
-#        print(f"Test {i}: {line}")
         TYPE, type_, metadata, restline = parser.parse(line)
-#        print(f"  Type: {TYPE}\n Block Type: {type_}\n Metadata: {metadata}\n Rest Line: '{restline}'")
-#        print(f"  Stack depth: {parser.stack.len()}")
-#        print(f"  Current node type: {parser.stack[-1].type}")
-#        print("-" * 40)
-#    parser.reverse_handle_block_match('', {}, '')# this is the init line
+
+### The history parser
+    resrap = Parser(mode='reverse')
+    resrap.set_syntax_chars(comment_char='#', escape_char='##')
     resrap.stack[-1].new_context_child(metadata={})  # This is EOF. this is glue structure.
     for i, line in enumerate(test_cases[cursor-1::-1]):
         TYPE, type_, metadata, restline = resrap.parse(line)
     resrap.reverse_handle_block_match('', {}, '')  # this is SOF the init line
-#    if (l:=parser.stack.len() >=0):
-#        print(parser.stack[-l].to_json(indent=2))
-#    else:
-#        for ind,x in enumerate(parser.stack._history):
-#            print(f"History {ind}: {x.to_json(indent=2)}")
-#            print("-"*40)
+
+### Obtain history and future
     history = resrap.stack._history
     future = parser.stack._history
     freedom = None
@@ -347,29 +334,16 @@ if __name__ == '__main__':
         print(f"Future {ind}: {hope.to_json(indent=2)}")
         print("-" * 40)
 
-#    print(f"History 0: {history[0].to_json(indent=2)}")
-#    print("-" * 40)
-#    print(f"Future 0: {future[0].to_json(indent=2)}")
-#    print("-" * 40)
 
+### The following is to get the cursor near the position 
+    current_element = get_element_near_cursor(history, future);
+    if current_element.type == "context":
+        print(f"Cursor at {json.dumps(current_element.content, indent = 2)}")
+    else:
+        print(f"Cursor at {current_element.to_json(indent=2)}")
 
-### fucker test of combining treee fuckkkkk
-#    history[0].reverse()  # Reverse the first node
-#    history[0].update(future[0])  # Update it with the first future node
-#    freedom = history[0]
-#    print(f"Combined history and future: {freedom.to_json(indent=2)}")
-###    
+### the following function combines the history and future to print out the entire tree, can be used for the output.
 
-
-
-
-#    fufu = future[::-1]
-#    for regret in history:
-#        now = fufu.pop()
- #       regret.reverse()
-#        while now.children:
-#            regret.update(now)
- 
     huhu = history[::-1]
     for hope in future:
         while hope.children:
@@ -382,27 +356,3 @@ if __name__ == '__main__':
             freedom = regret
             print(f"freedom: {freedom.to_json(indent = 2)}")
             print("-"*40)
-    
-
-
-
-"""
-    for regret,hope in list(zip(history,future)):
-        print("current",counter)
-        counter+=1
-        regret.reverse()### fucking reverse it!!!
-        if freedom:
-            regret.giveback_child(freedom)
-            regret.new_context_child(metadata={})## add glue back
-#       print("--" * 40)
-#       print("regret", regret.to_json(indent=2))
-#       print("--" * 40)
-#       print("hope", hope.to_json(indent=2))
-#        for child in regret.children:
-#            print(child.to_json(indent=2))
-        regret.update(hope)
-        freedom = regret
-        print("current freedom", freedom.to_json(indent=2))
-        print("-" * 40)
-#    print(freedom.to_json(indent=2))
-"""
