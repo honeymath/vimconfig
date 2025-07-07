@@ -13,6 +13,8 @@ class Node:
         if metadata:
             self.add_metadata(metadata)
 
+    def append_content(self,line):
+        self.content.append(line)
     def reverse(self):
         self.children.reverse()
         self.content.reverse()
@@ -48,13 +50,39 @@ class Node:
             print("Is default faught:", isinstance(self.metadata,defaultdict))
             raise e
 
-    def new_context_child(self, metadata=None, type='context'):
+    def new_context_child(self, metadata=None, type='context', silent = False):
+        ### handle the notify the last chldren
+        if self.children and not silent:
+            self.children[-1].handle_end_signal()
+        ### the above finish the notification
         child = Node(type=type, metadata=metadata)
+        ### handle the path
+        if self.metadata['path']:
+            the_path = [x for x in self.metadata['path'][-1]] ## deep copy
+            number_children = len(self.children)
+            the_path.append(number_children)
+            child.add_metadata({'path':the_path})
+        else:
+            raise Exception('The path is not here! Fuck')
+        ###
         self.children.append(child)
         return child
 
     def new_non_context_child(self, type='', metadata=None):
+        ### handle the notify the last chldren
+        if self.children:
+            self.children[-1].handle_end_signal()
+        ### the above finish the notification
         child = Node(type=type, metadata=metadata)
+        ### handle the path
+        if self.metadata['path']:
+            the_path = [x for x in self.metadata['path'][-1]] ## deep copy
+            number_children = len(self.children)
+            the_path.append(number_children)
+            child.add_metadata({'path':the_path})
+        else:
+            raise Exception('The path is not here! Fuck')
+        ###
         self.children.append(child)
         return child
 
@@ -96,6 +124,13 @@ class Node:
             self.kidnap_children(node.children[0].children)
             node.children = node.children[1:]
 
+    def on_pop(self):
+        self.children[-1].handle_end_signal()  # Notify the last child that it will be popped soon.
+    def handle_end_signal(self):
+        print(self.content)## just a testo
+        ## this is only supposed to be called by the context node
+        pass
+
 # 🌟 DefaultStack 按小主设计
 class DefaultStack:
     def __init__(self, default_factory, callback_index=-float('inf'), callback_function=None):
@@ -105,22 +140,30 @@ class DefaultStack:
         self.callback_index = callback_index
         self.callback_function = callback_function
 
-    def push(self, value):
-        self._data.append(value)
-
     def append(self, value):
+        path = self.getpath()
+        value.add_metadata({'path': path})
         self._data.append(value)
 
     def pop(self):
         if not self._data:
             self.generate()
+        self._data[-1].on_pop() ## notify the element it will be pop soon. prepare
         if self.len() == self.callback_index:
             if self.callback_function:
                 self.callback_function(stack=self)
         return self._data.pop()
 
+    def getpath(self):
+        history_number = len(self._history)
+        # Finish the logic of getting path
+        # have to use deepcopy to avoid 
+        return []
+
     def generate(self):
         new_value = self.default_factory()
+        the_path = self.getpath()
+        new_value.add_metadata({'path': the_path})
         self._history.append(new_value)
         self._data.insert(0, new_value)
 
@@ -222,7 +265,7 @@ class Parser:
             self.stack.pop()
             old_state = self.stack[-1].type
         self.stack[-1].kidnap_children(Orphanage)  
-        self.stack[-1].children[-1].add_metadata({type: metadata})
+        self.stack[-1].children[-1].add_metadata({type: metadata}) ### what? confuse? type:meta
         self.stack[-1].new_context_child(metadata={})## remember no fucking metadata
         self.stack[-1].type = self.state
 
@@ -255,7 +298,7 @@ class Parser:
         TYPE, type_, metadata, restline = self.match(line)
         if TYPE == "CONTENT":
             if self.stack[-1].children:
-                self.stack[-1].children[-1].content.append(line)
+                self.stack[-1].children[-1].append_content(line)
             else:
                 raise Exception("FUCKER your mother!")
         elif TYPE == "BLOCK":
@@ -302,7 +345,8 @@ if __name__ == '__main__':
         "#end",
     ]
 
-    cursor = 12
+#    cursor = 13
+    cursor = 0
 
 
 ### The future parser running.
@@ -313,6 +357,7 @@ if __name__ == '__main__':
     for i, line in enumerate(test_cases[cursor:]):
         TYPE, type_, metadata, restline = parser.parse(line)
 
+    print("Finished finding the future, now finding the histoy")
 ### The history parser
     resrap = Parser(mode='reverse')
     resrap.set_syntax_chars(comment_char='#', escape_char='##')
