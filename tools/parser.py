@@ -10,6 +10,7 @@ class Node:
         self.content = content if content else []
         self.metadata = defaultdict(list)
         self.index = index
+        self.emails = None
         if metadata:
             self.add_metadata(metadata)
 
@@ -25,15 +26,15 @@ class Node:
 
     def to_dict(self):
         fucker = {}
+        for k, v in self.metadata.items():
+            if v and v[0]:
+                fucker[f'm.{k}'] = v[-1]
         if self.type:
             fucker['type']= self.type
         if self.content:
             fucker['content'] = self.content
         if self.children:
             fucker['children'] = [child.to_dict() for child in self.children]
-        for k, v in self.metadata.items():
-            if v and v[0]:
-                fucker[f'm.{k}'] = v[-1]
         return fucker
 
     def to_json(self, indent=2):
@@ -57,11 +58,21 @@ class Node:
         ### the above finish the notification
         child = Node(type=type, metadata=metadata)
         ### handle the path
+        if self.metadata['scale']:
+            the_scale = self.metadata['scale'][-1]
+        else:
+            raise Exception(' The scale is not given')
+
         if self.metadata['path']:
             the_path = [x for x in self.metadata['path'][-1]] ## deep copy
             number_children = len(self.children)
-            the_path.append(number_children)
+            address = number_children * the_scale
+            if self.emails and address in self.emails:
+                child.emails = self.emails[address]
+            the_path.append(address)
+            #the_path.append(number_children*the_scale)
             child.add_metadata({'path':the_path})
+            child.add_metadata({'scale':the_scale})
         else:
             raise Exception('The path is not here! Fuck')
         ###
@@ -75,11 +86,20 @@ class Node:
         ### the above finish the notification
         child = Node(type=type, metadata=metadata)
         ### handle the path
+        if self.metadata['scale']:
+            the_scale = self.metadata['scale'][-1]
+        else:
+            raise Exception(' The scale is not given')
+
         if self.metadata['path']:
             the_path = [x for x in self.metadata['path'][-1]] ## deep copy
             number_children = len(self.children)
-            the_path.append(number_children)
+            address = number_children * the_scale
+            if self.emails and address in self.emails:
+                child.emails = self.emails[address]
+            the_path.append(address)
             child.add_metadata({'path':the_path})
+            child.add_metadata({'scale':the_scale})
         else:
             raise Exception('The path is not here! Fuck')
         ###
@@ -128,45 +148,63 @@ class Node:
         self.children[-1].handle_end_signal()  # Notify the last child that it will be popped soon.
     def handle_end_signal(self):
         print(self.content)## just a testo
+        if self.emails:
+            print(f"Emails: {self.emails}")
         ## this is only supposed to be called by the context node
         pass
 
 # 🌟 DefaultStack 按小主设计
 class DefaultStack:
-    def __init__(self, default_factory, callback_index=-float('inf'), callback_function=None):
+    def __init__(self, default_factory, callback_index=-float('inf'), callback_function=None, scale = 1):
         self._data = []
         self._history = []
         self.default_factory = default_factory
         self.callback_index = callback_index
         self.callback_function = callback_function
+        self.scale = scale # this is to scale the path
+        self.emails = {}
+        self.willing = True
+
+    def set_stop_index(self,ind):
+        self.callback_index = ind
+        self.callback_function = self.not_willing
+
+    def not_willing(self,stack):
+        self.willing = False
+
 
     def append(self, value):
-        path = self.getpath()
-        value.add_metadata({'path': path})
+        #path = self.getpath()
+        #value.add_metadata({'path': path})
         self._data.append(value)
 
-    def pop(self):
+    def pop(self, silent=False):
         if not self._data:
             self.generate()
-        self._data[-1].on_pop() ## notify the element it will be pop soon. prepare
+        if not silent:
+            self._data[-1].on_pop() ## notify the element it will be pop soon. prepare
         if self.len() == self.callback_index:
             if self.callback_function:
                 self.callback_function(stack=self)
         return self._data.pop()
 
-    def getpath(self):
-        history_number = len(self._history)
+#    def getpath(self):
+#        history_number = len(self._history)
         # Finish the logic of getting path
-        temp_path = [float('inf')] * (history_number)
-        for i in self._data:
-            temp_path.append(len(i.children))
+#        temp_path = [self.scale*float('inf')] * (history_number)
+#        for i in self._data:
+#            temp_path.append(len(i.children))
         # have to use deepcopy to avoid 
+#        temp_path = [x * self.scale for x in temp_path]
         return temp_path
 
     def generate(self):
         new_value = self.default_factory()
-        the_path = self.getpath()
-        new_value.add_metadata({'path': the_path})
+        history_number = len(self._history)
+        new_value.add_metadata({'path': [self.scale * float('inf')] * history_number})
+        if history_number in self.emails:
+            new_value.emails = self.emails[history_number]
+        new_value.add_metadata({'scale': self.scale})
         self._history.append(new_value)
         self._data.insert(0, new_value)
 
@@ -265,7 +303,7 @@ class Parser:
         Orphanage = []
         while old_state!='' and old_state != 'end' and self.state != old_state:
             Orphanage.extend(self.stack[-1].borrow_child())
-            self.stack.pop()
+            self.stack.pop(silent=True)  # Pop the last element without notifying it
             old_state = self.stack[-1].type
         self.stack[-1].kidnap_children(Orphanage)  
         self.stack[-1].children[-1].add_metadata({type: metadata}) ### what? confuse? type:meta
@@ -332,42 +370,66 @@ def get_element_near_cursor(history,future):
 
 if __name__ == '__main__':
     test_cases = [
-        "#ai:First ai block",
-        "Content line 1",
-        "Content line 2 with inactiva inline __ ",
-        "ai:Active line 3 with final mark #ai:do prompt",
-        "#ai:Empty Line",
-        "Active line 4 with inline _________ ___and___ ___a___bove should have empty content #see:some see",
-        "Normal Content line 5",
-        "Normal Content line 6",
-            "#see: inner block",
-                "Content line 7",
-                "Content line 8",
-                "active line 9 with inline __ and final mark #ai:caution",
+        "Content 0",
+        "#ai: block start",
+            "#see: see block",
+                "#ai: AI block again",
+                    "#see:second see block",
+                        "Content line 2 #ai: mark inline", 
+                    "#end",
+                "#end",
             "#end",
         "#end",
-    ]
+        ]
+    cursor = 5
+#    cursor = 0
 
-#    cursor = 13
-    cursor = 0
 
+### The history parser
+    resrap = Parser(mode='reverse')
+    resrap.stack.scale = -1
+#    resrap.stack.emails = {0:{-3:"rinima!!!rinima!!!"},1:{-3:"line one fuck"}}  # This is to test the email system.
+    resrap.set_syntax_chars(comment_char='#', escape_char='##')
+    resrap.stack[-1].new_context_child(metadata={})  # This is EOF. this is glue structure.
+    resrap.stack.set_stop_index(-2)
+    badcursor = cursor
+    while resrap.stack.willing and badcursor >=0:
+        line = test_cases[cursor]
+        resrap.parse(line)
+        badcursor -= 1
+    resrap.reverse_handle_block_match('', {}, '')  # this is SOF the init line.
 
+#    for i, line in enumerate(test_cases[cursor-1::-1]):
+#        TYPE, type_, metadata, restline = resrap.parse(line)
+#    resrap.reverse_handle_block_match('', {}, '')  # this is SOF the init line
+
+### Parser for the future
 ### The future parser running.
     parser = Parser(mode='normal')
+    for index,regret in enumerate(resrap.stack._history):
+        parser.stack[-1-index].type = regret.type
+####### Transmisssion finished. 
     parser.set_syntax_chars(comment_char='#', escape_char='##')
+    parser.stack.set_stop_index(-2)
+    goodcursor = cursor
+### We trasmit the state to the future parser
+    while parser.stack.willing and goodcursor < len(test_cases):
+        line = test_cases[goodcursor]
+        TYPE, type_, metadata, restline = parser.parse(line)
+        goodcursor += 1
+
+
+
+
 
     parser.stack[-1].new_context_child(metadata={})  # This is SOF the init line mother fucker!!!!
     for i, line in enumerate(test_cases[cursor:]):
         TYPE, type_, metadata, restline = parser.parse(line)
 
     print("Finished finding the future, now finding the histoy")
-### The history parser
-    resrap = Parser(mode='reverse')
-    resrap.set_syntax_chars(comment_char='#', escape_char='##')
-    resrap.stack[-1].new_context_child(metadata={})  # This is EOF. this is glue structure.
-    for i, line in enumerate(test_cases[cursor-1::-1]):
-        TYPE, type_, metadata, restline = resrap.parse(line)
-    resrap.reverse_handle_block_match('', {}, '')  # this is SOF the init line
+
+###
+
 
 ### Obtain history and future
     history = resrap.stack._history
