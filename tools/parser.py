@@ -478,7 +478,7 @@ if __name__ == '__main__':
 
 ### the following function combines the history and future to print out the entire tree, can be used for the output.
 
-
+"""
 fala = None
 for i in range(3):
     history[i].reverse()
@@ -488,6 +488,7 @@ for i in range(3):
     history[i].update(future[i])
     fala = history[i]
 print(f"Final Result:{history[2].to_json(indent=2)}")
+"""
 
 
 
