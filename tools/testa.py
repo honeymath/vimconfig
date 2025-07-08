@@ -1,5 +1,14 @@
 from parser import Parser, get_element_near_cursor
+from collections import defaultdict
 import json
+
+def set_email(email, value, emails_to_send):
+    if len(email) == 1:
+        emails_to_send[email[0]] = value
+    else:
+        if email[0] not in emails_to_send or not isinstance(emails_to_send[email[0]], dict):
+            emails_to_send[email[0]] = {}
+        set_email(email[1:], value, emails_to_send[email[0]])
 
 lines = [
     "#see:should be ignored",
@@ -25,10 +34,47 @@ lines = [
 ]
 cursor = 7  # 光标行的位置
 level = 2
+#### the 
+
+input_email_list = {"2/0": "replace1", "0/1": "replace2", "0/2": "replacejump","0/-2": "Addind start context", "0/-1": "Step 1 advanced", "0/0": "Step 2 advanced"}
+
+modify_keys = []
+negative_modify_keys = []
+
+for k in input_email_list.keys():
+    key_parts = [int(x) for x in k.split('/')]
+    if key_parts[1] >= 0:
+        modify_keys.append(tuple(key_parts))
+    elif key_parts[1] < 0:
+        negative_modify_keys.append(tuple(key_parts))
+    
+    if key_parts == [0,0]: ## this in make sure the 0,0 both appear in positive and negative part.
+        negative_modify_keys.append(tuple(key_parts))
+
+
+print("Modified keys:", modify_keys)
+print("Negative modified keys:", negative_modify_keys)
+## the following is an example of modified list
+#modify_list = {(2,0): "replace1", (0,1): "replace2", (0,2):"replacejump"}
+
+
+
+
+
 # 1. 向前回溯
+badcursor=cursor-1
 resrap = Parser(mode='reverse')
 resrap.stack.scale = -1
 resrap.set_syntax_chars(comment_char='#', escape_char='##')
+## set up emails
+badresults = defaultdict(list)
+function_list = {k: lambda c,k=k: badresults[k].append(badcursor) for k in negative_modify_keys}
+emails_to_send = {}
+for k,v in function_list.items():
+    caocao = list(k)
+    set_email(caocao, v, emails_to_send)
+resrap.stack.emails = emails_to_send  
+## finishing set up emails
 resrap.stack[-1].new_context_child(metadata={})
 
 badcursor = cursor - 1
@@ -69,72 +115,23 @@ parser = Parser(mode='normal')
 
 #modify_list = {2:{0:"replace1"}, 0:{1:"replace2"}}
 
-modify_list = {(2,0): "replace1", (0,1): "replace2", (0,2):"replacejump"}
-
-from collections import defaultdict
-
+#modify_keys = []
+#negative_modify_keys = []
 
 
+#modify_list = {(2,0): "replace1", (0,1): "replace2", (0,2):"replacejump"}
+
+
+
+## set up emails
 results = defaultdict(list)
-goodcursor = 0
-
-function_list = {k: lambda c,k=k: results[k].append(goodcursor) for k in modify_list.keys()} ## use k=k to bind the variable k to the lambda function, otherwise it will always use the last value of k in the loop.
-
-
-### print I have test calling
-
-#for k, v in function_list.items():
-#    goodcursor += 1
-#    v("rinima")
-#    print("Here is the output\n"*10)
-#    print(results)
-#    print("Above\n"*10)
-
-### The fucking output
-##results = {(0,1):[1,2]}
-### I am expecting
-## results = {(2,0):[2], (0,1):[1]}
-
-###
-
+function_list = {k: lambda c,k=k: results[k].append(goodcursor) for k in modify_keys}
 emails_to_send = {}
-
-def set_email(email, value, emails_to_send):
-    if len(email) == 1:
-        emails_to_send[email[0]] = value
-    else:
-        if email[0] not in emails_to_send or not isinstance(emails_to_send[email[0]], dict):
-            emails_to_send[email[0]] = {}
-        set_email(email[1:], value, emails_to_send[email[0]])
-emails_to_send = {}
-for k, v in function_list.items():
-    set_email(list(k), v, emails_to_send)
-
-print("Email has been prepared")
-print(emails_to_send)
-print("function_list")
-print(function_list)
-
-
-### Now emails_to_send should be a email list that can be send with the full function list.
-
-## the variable to return is a results( the path to the [initial line number, end line number]) and the modify list , the path to  the content to modify. for later use.
-
-
 for k,v in function_list.items():
     caocao = list(k)
     set_email(caocao, v, emails_to_send)
-
-## now emails_to_send is the required emaillist?
-
-def hand(content):
-    print("You fucking bullshit\n"*10)
-    print(content)
-    print("You fucking bullshit\n"*10)
-
-parser.stack.emails = emails_to_send  ## seding the emaill to future parser, don't forgot the history parser.
-#parser.stack.emails = {2:{0:hand},0:{1:hand}}
-### the above are email
+parser.stack.emails = emails_to_send  
+## finishing set up emails
 
 
 
@@ -145,15 +142,18 @@ for index, regret in enumerate(resrap.stack._history):
     parser.stack[-1 - index].type = regret.type
 parser.state = parser.stack[-1].type
 parser.set_syntax_chars(comment_char='#', escape_char='##')
-parser.stack[-1].new_context_child(metadata={}) ## SOF
 
 # 3. 向后拼接
 
 
 
 goodcursor = cursor
+parser.stack[-1].new_context_child(metadata={}) ## SOF
 while parser.stack.len() > -level-1 and goodcursor < len(lines):
+    print(f"Current cursor position", goodcursor, "with line:", lines[goodcursor])
     parser.parse(lines[goodcursor])
+    print(f"The parser has been runned")
+
     goodcursor += 1
 
 
@@ -208,11 +208,41 @@ print(fala.to_json(indent=2))
 
 print("The list for lines and modifying content:")
 print(results)
+print(badresults)
+
+#### Now combine the history results and future 
+
+total_results = {}
+if (0,0) in results:
+    if (0,0) not in badresults:
+        raise Exception("If (0,0) in results, it should also appear in historical bad results")
+    smid,start = badresults[(0,0)]
+    emid, end = results[(0,0)]
+    if smid + 1 != emid:
+        print(f"start,smid,emid,end: {start,smid,emid,end}")
+        raise Exception("The end of (0,0) or start of (0,0) does not match the cursor.")
+    total_results[(0,0)] = [start, end]
+
+for k,v in results.items():
+    if k == (0,0):
+        continue
+    total_results[k] = v
+for k,v in badresults.items():
+    if k == (0,0):
+        continue
+    if k in total_results:
+        raise Exception(f"How come a negative key appear in total results?")
+    total_results[k] = [v[1],v[0]] ## reverse because it is in history
+
+## update finishi
+
+#print(total_results)
+    
 
 
 modify_area = defaultdict(list)
 
-for k,v in results.items():
+for k,v in total_results.items():
     x,y = v
     if x == y:
         modify_area[k] = [x,y+1]
@@ -224,7 +254,9 @@ for k,v in results.items():
 
 sorted_list = sorted(modify_area.items(), key=lambda item: item[1][0], reverse=True)
 
+print("The sorted list for modifying area:")
 print(sorted_list)
+print("End of the sorted list of modifying area")
 
 
 ### Lines before modification
@@ -233,13 +265,25 @@ print("The lines before modification")
 print(json.dumps(lines,indent = 2))
 
 for key, content_area in sorted_list:
-    content = modify_list[key].split('\n')
+    superkey = '/'.join([str(x) for x in list(key)])
+    content = input_email_list[superkey].split('\n')
+#    content = modify_list[key].split('\n')
     start, end = content_area
     lines[start:end] = content
 
 print("The lines after modification")
 print(json.dumps(lines, indent=2))
     
+
+
+
+##### 
+print("The good results")
+print(results)
+print("The bad results")
+print(badresults)
+
+### from here and finish the logic of bad results
 
 
 

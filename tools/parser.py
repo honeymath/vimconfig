@@ -25,46 +25,36 @@ class Node:
             child.reverse()
 
     def to_dict(self):
-        fucker = {}
+        output_dic = {}
         ignore_meta = ['scale','end','path']
         for k, v in self.metadata.items():
             if k not in ignore_meta and v and v[0]:
-                fucker[f'm.{k}'] = v[-1]
+                output_dic[f'm.{k}'] = v[-1]
         if self.metadata['path']:
-#            the_path = [str(x) if (x < float('inf') and x > -float('inf')) else ".." for x in self.metadata['path'][-1]]
-#            the_path = [x for x in self.metadata['path'][-1] if(x < float('inf') and x > -float('inf'))else ".."] ## deep copy
-#            the_path = [str(x) for x in self.metadata['path'][-1]]
-#            fucker['path'] = '/'.join(the_path)
-            fuckyou=self.metadata['path'][-1]
-#            fuckyou = [str(x) for x in fuckyou] 
-#            fucker['path'] = '/'.join(fuckyou)
-            fucker['path'] = str(fuckyou)
-            
-            
-       
-            
-            
+            path_entry=self.metadata['path'][-1]
+            output_dic['path'] = str(path_entry)
+            inf_counter = 0
+            for i in path_entry:
+                if i == float('inf') or i == -float('inf'):
+                    inf_counter += 1
+            path_entry[0:inf_counter] = [inf_counter]
+            output_dic['email'] = ( '/'.join([str(x) for x in path_entry]))
         if self.type:
-            fucker['type']= self.type
+            output_dic['type']= self.type
         if self.content:
-            fucker['content'] = self.content
+            output_dic['content'] = self.content
         if self.children:
-            fucker['children'] = [child.to_dict() for child in self.children]
-        return fucker
+            output_dic['children'] = [child.to_dict() for child in self.children]
+        return output_dic
 
     def to_json(self, indent=2):
         return json.dumps(self.to_dict(), indent=indent)
     
     def add_metadata(self, metadata):
         if not isinstance(self.metadata, defaultdict):
-            print("YOU SUPER FUCKER!!! ")
-        try:
-            for k, v in metadata.items():
-                self.metadata[k].append(v)
-        except Exception as e:
-            print("Fuck the whole world!")
-            print("Is default faught:", isinstance(self.metadata,defaultdict))
-            raise e
+            raise Exception("The metadata of this node is not defaultdict, please do not modify medatada without calling add_metadata! ")
+        for k, v in metadata.items():
+            self.metadata[k].append(v)
 
     def new_context_child(self, metadata=None, type='context', silent = False):
         ### handle the notify the last chldren
@@ -85,13 +75,14 @@ class Node:
             if self.emails and address in self.emails:
                 child.emails = self.emails[address]
                 #print(f"Child emails: {child.emails}")
+                #print("Initial calling of email.")
                 child.reply_email()
             the_path.append(address)
             #the_path.append(number_children*the_scale)
             child.add_metadata({'path':the_path})
             child.add_metadata({'scale':the_scale})
         else:
-            raise Exception('The path is not here! Fuck')
+            raise Exception('The path is not here! ')
         ###
         self.children.append(child)
         return child
@@ -119,7 +110,7 @@ class Node:
             child.add_metadata({'path':the_path})
             child.add_metadata({'scale':the_scale})
         else:
-            raise Exception('The path is not here! Fuck')
+            raise Exception('The path is not here! ')
         ###
         self.children.append(child)
         return child
@@ -160,8 +151,6 @@ class Node:
         if child.type != 'context':
             raise ValueError("Child must be of type 'context' to be eaten.")
         self.children[-1].content.extend(child.content)
-#        super_fucker = {rinima:bi for rinima,bi in child.metadata.items()}
-#        self.children[-1].add_metadata(super_fucker)
         self.children[-1].extend_metadata(child)
 
     def kidnap_children(self, children):
@@ -183,6 +172,7 @@ class Node:
     def reply_email(self):
         if callable(self.emails):
             self.emails(self)
+            #print("Email has been called")
 
     def handle_end_signal(self):
         self.reply_email() 
@@ -318,7 +308,7 @@ class Parser:
             return
         old_state, self.state = self.state, type
         #from now on, the selfstate is the current type
-        if self.state == 'end': ## it has ignore the previous fuck
+        if self.state == 'end': ## it has ignore the previous 
             self.stack.append(self.stack[-1].new_non_context_child(type='end', metadata={}))
             self.stack[-1].new_context_child() ### added for fogic
             return
@@ -326,7 +316,7 @@ class Parser:
             self.stack[-1].type = self.state
             self.stack[-1].children[-1].add_metadata({type: metadata})
             self.stack.pop()
-            self.stack[-1].new_context_child(metadata={})## everytime pop, create a context, without fucking metadata.
+            self.stack[-1].new_context_child(metadata={})## everytime pop, create a context, without metadata.
             self.state = self.stack[-1].type  # remembers the state
             return
         ##from now on ,the coming state must be ai or see.
@@ -337,7 +327,7 @@ class Parser:
             old_state = self.stack[-1].type
         self.stack[-1].kidnap_children(Orphanage)  
         self.stack[-1].children[-1].add_metadata({type: metadata}) ### what? confuse? type:meta
-        self.stack[-1].new_context_child(metadata={})## remember no fucking metadata
+        self.stack[-1].new_context_child(metadata={})## remember no  metadata
         self.stack[-1].type = self.state
 
     def match(self, line):
@@ -373,7 +363,7 @@ class Parser:
             if self.stack[-1].children:
                 self.stack[-1].children[-1].append_content(line)
             else:
-                raise Exception("FUCKER your mother!")
+                raise Exception("Unexpected, the last element does not have content children")
         elif TYPE == "BLOCK":
             if self.mode == 'reverse':
                 self.reverse_handle_block_match(type_, metadata[type_], line)
@@ -385,9 +375,8 @@ class Parser:
 
 
 def get_element_near_cursor(history,future):
-    #print("CAONIMABI!!!")
     if not future[0]:
-        print(f"You have no fucking future!")
+        print(f"This element has not future elements.")
         return Node()
     elif not future[0].children:
         print(f"You have no children!")
@@ -432,7 +421,7 @@ if __name__ == '__main__':
 ### The history parser
     resrap = Parser(mode='reverse')
     resrap.stack.scale = -1
-#    resrap.stack.emails = {0:{-3:"rinima!!!rinima!!!"},1:{-3:"line one fuck"}}  # This is to test the email system.
+#    resrap.stack.emails = {0:{-3:"rinima!!!rinima!!!"},1:{-3:"line one "}}  # This is to test the email system.
     resrap.set_syntax_chars(comment_char='#', escape_char='##')
     resrap.stack[-1].new_context_child(metadata={})  # This is EOF. this is glue structure.
     badcursor = cursor-1
@@ -463,9 +452,9 @@ if __name__ == '__main__':
 ####### Transmisssion finished. 
     parser.set_syntax_chars(comment_char='#', escape_char='##')
     goodcursor = cursor
-    print(f"Fucking parser state is {parser.state}")
-    parser.stack[-1].new_context_child(metadata={})  # This is SOF the init line mother fucker!!!!
-    print(f"After Fucking parser state is {parser.state}")
+    print(f"king parser state is {parser.state}")
+    parser.stack[-1].new_context_child(metadata={})  # This is SOF the init line mother !!!!
+    print(f"After king parser state is {parser.state}")
 ### We trasmit the state to the future parser
     while parser.stack.len()>-3 and goodcursor < len(test_cases):
         line = test_cases[goodcursor]
@@ -484,7 +473,7 @@ if __name__ == '__main__':
 
 
 
-#    parser.stack[-1].new_context_child(metadata={})  # This is SOF the init line mother fucker!!!!
+#    parser.stack[-1].new_context_child(metadata={})  # This is SOF the init line mother !!!!
 #    for i, line in enumerate(test_cases[cursor:]):
 #        TYPE, type_, metadata, restline = parser.parse(line)
 
@@ -540,7 +529,7 @@ print(f"Final Result:{history[2].to_json(indent=2)}")
             regret.reverse()
             if freedom:
                 regret.giveback_child(freedom)
-                regret.new_context_child(metadata={}) ## using to absorb fuck.
+                regret.new_context_child(metadata={}) ## using to absorb .
             regret.update(hope)
             freedom = regret
             print(f"freedom: {freedom.to_json(indent = 2)}")
