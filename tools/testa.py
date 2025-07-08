@@ -40,12 +40,84 @@ parser = Parser(mode='normal')
 ## The first number 2 means the number of ../, for example, to access ../../1/2, you write 2/1/2. To access  3/2 you write 0/3/2, to access 0/0, you write 0/0/0  the 
 ## the email system can let the parser call fucntions while running. Used for GPT to modify the vim buffer area.
 
+## todo list: Given a dictionary of path "a/b/c", dynamic create the function parser, and send to the.
+
+## The output is a list, of the position, and a list of changing. the change will happen at the end.
+
+
+### If the parser is running with empty email, it will just return the result. If the parser is running with emails, it will return the original and the result for each one. 
+
+### Also, there should be a python file store the state. Have to have the request ID.....
+
+
+### tasks.
+# Task1: reformat the path json as a label directly used to receive emails.
+# reformat m.ai and m.see as Can/Can not Modify this area, user said:
+# Task2: Create function to translate the email list into start and end part list.
+# Task 3: Given the list of range and text, modify the original input.
+
+#dic defaultdict.
+
+
+#lamnda c: dic[email].append(cursor)
+
+## Create a state python to just store the state dictionary of vim's and also have a method to register a papa. 
+
+#modify_list = {2:{0:"replace1"}, 0:{1:"replace2"}}
+
+modify_list = {(2,0): "replace1", (0,1): "replace2"}
+
+from collections import defaultdict
+
+
+
+results = defaultdict(list)
+goodcursor = 0
+
+function_list = {k: lambda c: results[k].append(goodcursor) for k in modify_list.keys()}
+
+emails_to_send = {}
+
+def set_email(email, value, emails_to_send):
+    if len(email) == 1:
+        emails_to_send[email[0]] = value
+    else:
+        if email[0] not in emails_to_send or not isinstance(emails_to_send[email[0]], dict):
+            emails_to_send[email[0]] = {}
+        set_email(email[1:], value, emails_to_send[email[0]])
+emails_to_send = {}
+for k, v in function_list.items():
+    set_email(list(k), v, emails_to_send)
+
+print("Email has been prepared")
+print(emails_to_send)
+
+
+### Now emails_to_send should be a email list that can be send with the full function list.
+
+## the variable to return is a results( the path to the [initial line number, end line number]) and the modify list , the path to  the content to modify. for later use.
+
+
+for k,v in function_list.items():
+    caocao = list(k)
+    set_email(caocao, v, emails_to_send)
+
+## now emails_to_send is the required emaillist?
+
 def hand(content):
     print("You fucking bullshit\n"*10)
     print(content)
     print("You fucking bullshit\n"*10)
+
+parser.stack.emails = emails_to_send  ## seding the emaill to future parser, don't forgot the history parser.
+#parser.stack.emails = {2:{0:hand},0:{1:hand}}
 ### the above are email
-parser.stack.emails = {2:{0:hand},0:{1:hand}}
+
+
+
+
+
+
 for index, regret in enumerate(resrap.stack._history):
     parser.stack[-1 - index].type = regret.type
 parser.state = parser.stack[-1].type
@@ -108,3 +180,17 @@ for line in lines:
     print(line)
 print("Final Result:")
 print(fala.to_json(indent=2))
+
+## Out put for the results of modifiying list for buffer to modify
+
+print("The list for lines and modifying content:")
+print(results)
+
+
+
+#7 Some other, giving the change to the buffer according to the list.
+
+
+
+
+
