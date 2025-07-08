@@ -5,6 +5,7 @@ import vim
 
 def get_current_buffer():
     # ✨ 输入数据
+    """
     lines = [
         "#see:should be ignored",
         "#ai: Plan A",
@@ -27,18 +28,46 @@ def get_current_buffer():
         "Other content..."
         "#end",
     ]
+    """
 #### the 
-    return lines
+    import vim
+    return list(vim.current.buffer)
+    #return lines
 
 def get_position_by_marker(marker):
-    position = 8
-    return position
+#    position = 8
+#    return position
+    import vim
+    pos = vim.eval(f"getpos(\"'{marker}\")")  # getpos returns [bufnum, lnum, col, off]
+    line_number = int(pos[1]) - 1  # Vim 行号从1开始，Python从0开始
+    return line_number
+
     # ✨ 模拟获取光标位
 def get_current_cursor_position():
-    """获取当前光标位置"""
-    cursor = 7  # 光标落在 "Step B1" 这一行
-    marker = 'a' 
-    return cursor,marker # mimicking using vim to marker.
+#    """获取当前光标位置"""
+#    cursor = 7  # 光标落在 "Step B1" 这一行
+#    marker = 'a' 
+#    return cursor,marker # mimicking using vim to marker.
+    import vim
+    # 1. 获取当前光标位置（0-based）
+    cursor = vim.current.window.cursor[0] - 1
+
+    """## test the following later
+    # 2. 获取所有已设置的 mark 列表（包含 ['markname', bufnr, lnum, col, ...]）
+    marks = vim.eval("getmarklist()")
+    used_marks = {entry[0] for entry in marks if entry[0].isalpha() and entry[0].isupper()}
+    # 3. 在 A-Z 中找一个没用的 mark 名
+    for c in map(chr, range(ord('A'), ord('Z') + 1)):
+        if c not in used_marks:
+            marker = c
+            break
+    else:
+        # 万一全满了，就 fallback 用 'X'
+        marker = 'X'
+    """
+    marker = 'X' # I am fucker hahah
+    vim.command(f"execute 'normal! m{marker}'")
+    return cursor, marker
 
 def handler(**args):
     level = 2 ## looking for only 1 extra level
@@ -97,6 +126,8 @@ def handler(**args):
     ## Finnaly, get the element
     fala = None
     for i in range(level+1):
+        if i >= len(history):
+            break ### protect, safe.
         history[i].reverse()
         if fala:
             history[i].giveback_child(fala)
