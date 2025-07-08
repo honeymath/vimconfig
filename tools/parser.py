@@ -26,13 +26,20 @@ class Node:
 
     def to_dict(self):
         output_dic = {}
-        ignore_meta = ['scale','end','path']
+        ignore_meta = ['scale','end','path','regex']
         for k, v in self.metadata.items():
             if k not in ignore_meta and v and v[0]:
-                output_dic[f'm.{k}'] = v[-1]
+                if k == 'ai':
+                    output_dic[f'user_request'] = v[-1]
+                    output_dic['prompt'] = "Modifiable based on user request."
+                elif k == 'see':
+                    output_dic[f'user_comment'] = v[-1]
+                    output_dic['prompt'] = "ReadOnly"
+                else:
+                    output_dic[f'm.{k}'] = v[-1]
         if self.metadata['path']:
             path_entry=self.metadata['path'][-1]
-            output_dic['path'] = str(path_entry)
+            #output_dic['path'] = str(path_entry)
             inf_counter = 0
             for i in path_entry:
                 if i == float('inf') or i == -float('inf'):
