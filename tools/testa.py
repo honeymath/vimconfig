@@ -69,6 +69,10 @@ resrap.set_syntax_chars(comment_char='#', escape_char='##')
 ## set up emails
 badresults = defaultdict(list)
 function_list = {k: lambda c,k=k: badresults[k].append(badcursor) for k in negative_modify_keys}
+## the new request
+# 1. after appending to the results to the time being. each time verify the self and obtain some datum, and also update some properties. 
+
+
 emails_to_send = {}
 for k,v in function_list.items():
     caocao = list(k)
