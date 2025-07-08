@@ -163,14 +163,7 @@ class DefaultStack:
         self.callback_function = callback_function
         self.scale = scale # this is to scale the path
         self.emails = {}
-        self.willing = True
 
-    def set_stop_index(self,ind):
-        self.callback_index = ind
-        self.callback_function = self.not_willing
-
-    def not_willing(self,stack):
-        self.willing = False
 
 
     def append(self, value):
@@ -270,6 +263,7 @@ class Parser:
         if self.state == 'end':
             self.stack.pop()
             self.state = self.stack[-1].type ## state reverse.
+            print(f"End detected! Stack poped, current length {self.stack.len()}, Status transferd to:{self.state}") 
             self.stack[-1].new_context_child(metadata={type: metadata})
         elif self.state == 'watch':
             self.stack.append(self.stack[-1].new_non_context_child(type='watch'))
@@ -353,18 +347,22 @@ class Parser:
 
 
 def get_element_near_cursor(history,future):
+    #print("CAONIMABI!!!")
     if not future[0]:
         print(f"You have no fucking future!")
         return Node()
     elif not future[0].children:
         print(f"You have no children!")
         return Node()
-    elif future[0].children[0].type == "context":
+    elif future[0].children[0].type == "context" or future[0].children[0].type == "oneline":
         rinima = future[0].children[0].content
+#        print(f"Rinima is {rinima}")
+#        print(f"Future[0]{future[0].to_json(indent=2)}")
         if rinima:
             return future[0].children[0]
         else:
             return future[0].children[1] if len(future[0].children) > 1 else future[0].children[0]
+#    print(future[0].children[0].to_json(indent=2))
 
 
 
@@ -376,9 +374,17 @@ if __name__ == '__main__':
                 "#ai: AI block again",
                     "#see:second see block",
                         "Content line 2 #ai: mark inline", 
+                        "Content 3",
+                    "#see:chanlenge",
+                        "Another see block",
                     "#end",
+                    "Content4",
+                "#ai:chanlange again",
+                    "Again again",
                 "#end",
+                "Content5. SUPPOSE LAST ONE",
             "#end",
+            "Content6",
         "#end",
         ]
     cursor = 5
@@ -391,11 +397,18 @@ if __name__ == '__main__':
 #    resrap.stack.emails = {0:{-3:"rinima!!!rinima!!!"},1:{-3:"line one fuck"}}  # This is to test the email system.
     resrap.set_syntax_chars(comment_char='#', escape_char='##')
     resrap.stack[-1].new_context_child(metadata={})  # This is EOF. this is glue structure.
-    resrap.stack.set_stop_index(-2)
-    badcursor = cursor
-    while resrap.stack.willing and badcursor >=0:
-        line = test_cases[cursor]
+    badcursor = cursor-1
+    while resrap.stack.len() > -2 and badcursor >=0:
+        line = test_cases[badcursor]
+        
         resrap.parse(line)
+#        print(line)
+#        print(resrap.stack.len())
+#        print(resrap.stack._data)
+#        print(len(resrap.stack._data))
+#        print(resrap.stack._history)
+#        print(len(resrap.stack._history))
+#        print("-"*40)
         badcursor -= 1
     resrap.reverse_handle_block_match('', {}, '')  # this is SOF the init line.
 
@@ -403,30 +416,41 @@ if __name__ == '__main__':
 #        TYPE, type_, metadata, restline = resrap.parse(line)
 #    resrap.reverse_handle_block_match('', {}, '')  # this is SOF the init line
 
-### Parser for the future
-### The future parser running.
+
+### begining transmission status
     parser = Parser(mode='normal')
     for index,regret in enumerate(resrap.stack._history):
         parser.stack[-1-index].type = regret.type
+    parser.state = parser.stack[-1].type  # remember the state
 ####### Transmisssion finished. 
     parser.set_syntax_chars(comment_char='#', escape_char='##')
-    parser.stack.set_stop_index(-2)
     goodcursor = cursor
+    print(f"Fucking parser state is {parser.state}")
+    parser.stack[-1].new_context_child(metadata={})  # This is SOF the init line mother fucker!!!!
+    print(f"After Fucking parser state is {parser.state}")
 ### We trasmit the state to the future parser
-    while parser.stack.willing and goodcursor < len(test_cases):
+    while parser.stack.len()>-3 and goodcursor < len(test_cases):
         line = test_cases[goodcursor]
         TYPE, type_, metadata, restline = parser.parse(line)
+        print(f"line:{line}")
+        print("    ", [x.type for x in parser.stack._history])
+        print(f"    history length: {len(parser.stack._history)}")
+        print("    ", [x.type for x in parser.stack._data])
+        print(f"    future length: {len(parser.stack._data)}")
+        print(f"    total length: {parser.stack.len()}")
+        print(f"    Current Status: {parser.state}")
+        
         goodcursor += 1
 
 
 
 
 
-    parser.stack[-1].new_context_child(metadata={})  # This is SOF the init line mother fucker!!!!
-    for i, line in enumerate(test_cases[cursor:]):
-        TYPE, type_, metadata, restline = parser.parse(line)
+#    parser.stack[-1].new_context_child(metadata={})  # This is SOF the init line mother fucker!!!!
+#    for i, line in enumerate(test_cases[cursor:]):
+#        TYPE, type_, metadata, restline = parser.parse(line)
 
-    print("Finished finding the future, now finding the histoy")
+#    print("Finished finding the future, now finding the histoy")
 
 ###
 
@@ -454,6 +478,22 @@ if __name__ == '__main__':
 
 ### the following function combines the history and future to print out the entire tree, can be used for the output.
 
+
+fala = None
+for i in range(3):
+    history[i].reverse()
+    if fala:
+        history[i].giveback_child(fala)
+        history[i].new_context_child(metadata={})
+    history[i].update(future[i])
+    fala = history[i]
+print(f"Final Result:{history[2].to_json(indent=2)}")
+
+
+
+
+### the following is previous sasa when status is not given hava value
+"""
     huhu = history[::-1]
     for hope in future:
         while hope.children:
@@ -466,3 +506,4 @@ if __name__ == '__main__':
             freedom = regret
             print(f"freedom: {freedom.to_json(indent = 2)}")
             print("-"*40)
+"""
