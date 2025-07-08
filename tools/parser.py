@@ -133,11 +133,13 @@ class Node:
     def giveback_child(self, child):
         self.children.append(child)
 
-    def add_inline_children(self, type=None, line='',  prompt= ''):
+    def add_inline_children(self, type=None, line='',  prompt= '', regex=None):
         child = self.new_context_child(type='oneline')
         meta = {}
         if type:
             meta[type] = prompt
+        if regex:
+            meta['regex'] = regex.pattern
         child.add_metadata(meta)
         child.content.append(line)
         self.new_context_child()  
@@ -180,7 +182,7 @@ class Node:
 
     def reply_email(self):
         if callable(self.emails):
-            self.emails(self.content)
+            self.emails(self)
 
     def handle_end_signal(self):
         self.reply_email() 
@@ -349,16 +351,18 @@ class Parser:
 
         prompt, type_, groups = "", "", []
         restline = line
+        saved_regex = None ## this is a to save the regex that mathing the oneline patterns
 
         for k, regex in self.ONELINE_PATTERNS.items():
             if (m := regex.search(line)):
+                saved_regex = regex
                 restline = m.group(1)
                 prompt = m.group(2)
                 type_ = k
                 break
 
         if type_:
-            metas = {"prompt": prompt}
+            metas = {"prompt": prompt,"regex": saved_regex}
             return "ONELINE", type_, metas, restline
 
         return "CONTENT", "", {}, line
@@ -376,7 +380,7 @@ class Parser:
             else:
                 self.handle_block_match(type_, metadata[type_], line)
         elif TYPE == "ONELINE":
-            self.stack[-1].add_inline_children(type=type_, line=restline, prompt=metadata["prompt"])
+            self.stack[-1].add_inline_children(type=type_, line=restline, prompt=metadata["prompt"], regex = metadata["regex"])
         return TYPE, type_, metadata, restline
 
 

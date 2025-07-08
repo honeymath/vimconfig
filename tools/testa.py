@@ -11,10 +11,14 @@ lines = [
     "Step 2",
     "#ai: Final Decision",
     "Step 3",
+    "Continue step 3",
+    "Another thing#ai:just jump",
+    "Step4",
     "#end",
     "Other test",
     "#end",
     "Test",
+    "Testa!",
     "#end",
     "Other content..."
     "#end",
@@ -65,7 +69,7 @@ parser = Parser(mode='normal')
 
 #modify_list = {2:{0:"replace1"}, 0:{1:"replace2"}}
 
-modify_list = {(2,0): "replace1", (0,1): "replace2"}
+modify_list = {(2,0): "replace1", (0,1): "replace2", (0,2):"replacejump"}
 
 from collections import defaultdict
 
@@ -74,7 +78,24 @@ from collections import defaultdict
 results = defaultdict(list)
 goodcursor = 0
 
-function_list = {k: lambda c: results[k].append(goodcursor) for k in modify_list.keys()}
+function_list = {k: lambda c,k=k: results[k].append(goodcursor) for k in modify_list.keys()} ## use k=k to bind the variable k to the lambda function, otherwise it will always use the last value of k in the loop.
+
+
+### print I have test calling
+
+#for k, v in function_list.items():
+#    goodcursor += 1
+#    v("rinima")
+#    print("Here is the output\n"*10)
+#    print(results)
+#    print("Above\n"*10)
+
+### The fucking output
+##results = {(0,1):[1,2]}
+### I am expecting
+## results = {(2,0):[2], (0,1):[1]}
+
+###
 
 emails_to_send = {}
 
@@ -91,6 +112,8 @@ for k, v in function_list.items():
 
 print("Email has been prepared")
 print(emails_to_send)
+print("function_list")
+print(function_list)
 
 
 ### Now emails_to_send should be a email list that can be send with the full function list.
@@ -185,6 +208,38 @@ print(fala.to_json(indent=2))
 
 print("The list for lines and modifying content:")
 print(results)
+
+
+modify_area = defaultdict(list)
+
+for k,v in results.items():
+    x,y = v
+    if x == y:
+        modify_area[k] = [x,y+1]
+    else:
+        modify_area[k] = [x+1,y]
+
+    
+# next sort the values in modify area and make sure there is no overlap.
+
+sorted_list = sorted(modify_area.items(), key=lambda item: item[1][0], reverse=True)
+
+print(sorted_list)
+
+
+### Lines before modification
+
+print("The lines before modification")
+print(json.dumps(lines,indent = 2))
+
+for key, content_area in sorted_list:
+    content = modify_list[key].split('\n')
+    start, end = content_area
+    lines[start:end] = content
+
+print("The lines after modification")
+print(json.dumps(lines, indent=2))
+    
 
 
 
