@@ -26,9 +26,24 @@ class Node:
 
     def to_dict(self):
         fucker = {}
+        ignore_meta = ['scale','end','path']
         for k, v in self.metadata.items():
-            if v and v[0]:
+            if k not in ignore_meta and v and v[0]:
                 fucker[f'm.{k}'] = v[-1]
+        if self.metadata['path']:
+#            the_path = [str(x) if (x < float('inf') and x > -float('inf')) else ".." for x in self.metadata['path'][-1]]
+#            the_path = [x for x in self.metadata['path'][-1] if(x < float('inf') and x > -float('inf'))else ".."] ## deep copy
+#            the_path = [str(x) for x in self.metadata['path'][-1]]
+#            fucker['path'] = '/'.join(the_path)
+            fuckyou=self.metadata['path'][-1]
+#            fuckyou = [str(x) for x in fuckyou] 
+#            fucker['path'] = '/'.join(fuckyou)
+            fucker['path'] = str(fuckyou)
+            
+            
+       
+            
+            
         if self.type:
             fucker['type']= self.type
         if self.content:
@@ -69,6 +84,8 @@ class Node:
             address = number_children * the_scale
             if self.emails and address in self.emails:
                 child.emails = self.emails[address]
+                #print(f"Child emails: {child.emails}")
+                child.reply_email()
             the_path.append(address)
             #the_path.append(number_children*the_scale)
             child.add_metadata({'path':the_path})
@@ -88,6 +105,7 @@ class Node:
         ### handle the path
         if self.metadata['scale']:
             the_scale = self.metadata['scale'][-1]
+            #print(f"Child emails: {child.emails}")
         else:
             raise Exception(' The scale is not given')
 
@@ -124,12 +142,25 @@ class Node:
         child.content.append(line)
         self.new_context_child()  
 
+    def extend_metadata(self,child):
+#        print("-- Before updating meta data --")
+#        print(json.dumps(self.metadata,indent = 2))
+#        print("--children meta data --")
+#        print(json.dumps(child.metadata,indent=2))
+#        print("-- Before updating --")
+        for k,v in child.metadata.items():
+            self.metadata[k].extend(v)
+#        print("-- After updating meta data --")
+#        print(json.dumps(self.metadata,indent = 2))
+#        print("-- After updating --")
+
     def eat_child(self, child):
         if child.type != 'context':
             raise ValueError("Child must be of type 'context' to be eaten.")
         self.children[-1].content.extend(child.content)
-        super_fucker = {rinima:bi for rinima,bi in child.metadata.items()}
-        self.children[-1].add_metadata(super_fucker)
+#        super_fucker = {rinima:bi for rinima,bi in child.metadata.items()}
+#        self.children[-1].add_metadata(super_fucker)
+        self.children[-1].extend_metadata(child)
 
     def kidnap_children(self, children):
         self.children.extend(children)
@@ -146,12 +177,15 @@ class Node:
 
     def on_pop(self):
         self.children[-1].handle_end_signal()  # Notify the last child that it will be popped soon.
+
+    def reply_email(self):
+        if callable(self.emails):
+            self.emails(self.content)
+
     def handle_end_signal(self):
-        print(self.content)## just a testo
-        if self.emails:
-            print(f"Emails: {self.emails}")
+        self.reply_email() 
+#            print(f"Emails: {self.emails}")
         ## this is only supposed to be called by the context node
-        pass
 
 # 🌟 DefaultStack 按小主设计
 class DefaultStack:
@@ -225,7 +259,7 @@ class DefaultStack:
 
 # 🌟 Parser 主逻辑
 class Parser:
-    def __init__(self, mode='normal', callback_index=-float('inf'), callback_function=None):
+    def __init__(self, mode='normal', callback_function=None):
         self.comment_char = '```'
         self.escape_char = '>'
         self.META = ['name', 'date']
@@ -238,7 +272,7 @@ class Parser:
             'end': 'end()$',
         }
         self.compile_patterns()
-        self.stack = DefaultStack(Node,callback_index=callback_index, callback_function=callback_function)
+        self.stack = DefaultStack(Node)
         self.state = ""
         self.mode = mode  # 'normal' or 'reverse'
 
@@ -263,7 +297,7 @@ class Parser:
         if self.state == 'end':
             self.stack.pop()
             self.state = self.stack[-1].type ## state reverse.
-            print(f"End detected! Stack poped, current length {self.stack.len()}, Status transferd to:{self.state}") 
+#            print(f"End detected! Stack poped, current length {self.stack.len()}, Status transferd to:{self.state}") 
             self.stack[-1].new_context_child(metadata={type: metadata})
         elif self.state == 'watch':
             self.stack.append(self.stack[-1].new_non_context_child(type='watch'))
