@@ -52,25 +52,28 @@ def get_current_cursor_position():
     # 1. 获取当前光标位置（0-based）
     cursor = vim.current.window.cursor[0] - 1
 
-    """## test the following later
+    ## test the following later
     # 2. 获取所有已设置的 mark 列表（包含 ['markname', bufnr, lnum, col, ...]）
-    marks = vim.eval("getmarklist()")
-    used_marks = {entry[0] for entry in marks if entry[0].isalpha() and entry[0].isupper()}
+    marks = vim.eval("getmarklist(bufnr('%'))")
+
+    used_marks = {entry['mark'] for entry in marks if entry['mark'].isalpha() and entry['mark'].islower()}
     # 3. 在 A-Z 中找一个没用的 mark 名
-    for c in map(chr, range(ord('A'), ord('Z') + 1)):
+    for c in map(chr, range(ord('a'), ord('z') + 1)):
         if c not in used_marks:
             marker = c
+            if len(used_marks) > 24: # if this marker is the only left marker
+                next_letter = chr((ord(c) - ord('a') + 1) % 26 + ord('a'))  # 循环使用 'a' 到 'z'
+                vim.command(f"delmarks {next_letter}")  # predelete the next one.
             break
     else:
-        # 万一全满了，就 fallback 用 'X'
-        marker = 'X'
-    """
-    marker = 'X' # I am fucker hahah
+        # 万一全满了，就 fallback 用 'a'
+        marker = 'a'
+    
     vim.command(f"execute 'normal! m{marker}'")
     return cursor, marker
 
 def handler(**args):
-    level = 2 ## looking for only 1 extra level
+    level = 1 ## looking for only 1 extra level
     if "marker" in args:
         marker = args["marker"]
         cursor = get_position_by_marker(marker)
