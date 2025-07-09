@@ -31,7 +31,8 @@ def get_current_buffer():
     """
 #### the 
     import vim
-    return list(vim.current.buffer)
+    return vim.current.buffer
+#    return list(vim.current.buffer)
     #return lines
 
 def get_position_by_marker(marker):

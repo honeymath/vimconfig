@@ -3,7 +3,7 @@ from collections import defaultdict
 import json
 # 🌟 Node 数据结构
 class Node:
-    def __init__(self, type="", content=[], metadata={},index=0):
+    def __init__(self, type="", content=[], metadata={},index=0, parent = None):
         ## so adding index will take care when stack poping out.
         self.type = type
         self.children = []
@@ -11,6 +11,7 @@ class Node:
         self.metadata = defaultdict(list)
         self.index = index
         self.emails = None
+        self.parent = parent 
         if metadata:
             self.add_metadata(metadata)
 
@@ -28,7 +29,7 @@ class Node:
         output_dic = {}
         ignore_meta = ['scale','end','path','regex']
         for k, v in self.metadata.items():
-            if k not in ignore_meta and v and v[0]:
+            if k not in ignore_meta:# and v and v[0]: # temply give all
                 if k == 'ai':
                     output_dic[f'user_request'] = v[-1]
                     output_dic['prompt'] = "Modifiable based on user request."
@@ -39,6 +40,7 @@ class Node:
                     output_dic[f'm.{k}'] = v[-1]
         if self.metadata['path']:
             path_entry=self.metadata['path'][-1]
+            path_entry = [x for x in path_entry]  # deep copy
             #output_dic['path'] = str(path_entry)
             inf_counter = 0
             for i in path_entry:
@@ -68,7 +70,7 @@ class Node:
         if self.children and not silent:
             self.children[-1].handle_end_signal()
         ### the above finish the notification
-        child = Node(type=type, metadata=metadata)
+        child = Node(type=type, metadata=metadata, parent=self)
         ### handle the path
         if self.metadata['scale']:
             the_scale = self.metadata['scale'][-1]
@@ -99,7 +101,7 @@ class Node:
         if self.children:
             self.children[-1].handle_end_signal()
         ### the above finish the notification
-        child = Node(type=type, metadata=metadata)
+        child = Node(type=type, metadata=metadata, parent=self)
         ### handle the path
         if self.metadata['scale']:
             the_scale = self.metadata['scale'][-1]
@@ -129,6 +131,7 @@ class Node:
         return childrenlist
 
     def giveback_child(self, child):
+        child.parent = self
         self.children.append(child)
 
     def add_inline_children(self, type=None, line='',  prompt= '', regex=None):
@@ -161,6 +164,8 @@ class Node:
         self.children[-1].extend_metadata(child)
 
     def kidnap_children(self, children):
+        for c in children:
+            c.parent = self
         self.children.extend(children)
 
     def update(self, node):
