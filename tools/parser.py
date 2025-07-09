@@ -61,7 +61,7 @@ class Node:
                     if i == float('inf') or i == -float('inf'):
                         inf_counter += 1
                 path_entry[0:inf_counter] = [inf_counter]
-                output_dic['modify-email'] = ( '/'.join([str(x) for x in path_entry]))
+                output_dic['to'] = ( '/'.join([str(x) for x in path_entry]))
         if self.type:
             output_dic['type']= self.type
         output_dic['parent'] = self.parent.type if self.parent else "NONE"

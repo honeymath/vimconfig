@@ -142,7 +142,7 @@ def handler(**args):
             print(f"Error updating history at level {i}: {e}")
             break
         fala = history[i]
-    return {"current_cursor": current_element.to_dict(), "annotated_context": fala.to_dict(), "marker":marker, "scanned_context":lines[badcursor+1:goodcursor]}
+    return {"current_cursor": current_element.to_dict(), "annotated_context": fala.to_dict(), "marker":marker, "scanned_context":lines[badcursor+1:goodcursor],"hint":"To modify the content, use 'to: n/n/n' to refer to the block, and 'content: your replaced content' to modify it."}
 
 if __name__ == "__main__":
     result = handler() 
