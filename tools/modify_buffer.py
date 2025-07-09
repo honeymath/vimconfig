@@ -59,7 +59,7 @@ def get_position_by_marker(marker):
     ## commenting above lines.
     import vim
     _,line_number,colum,_ = vim.eval(f"getpos(\"'{marker}\")")  # getpos returns [bufnum, lnum, col, off]
-    line_number = int(pos[1]) - 1  # Vim 行号从1开始，Python从0开始
+    line_number = int(line_number) - 1  # Vim 行号从1开始，Python从0开始
     return line_number
 
 def separate_keys(key_list):## keylist is a list of address
