@@ -4,6 +4,8 @@ from collections import defaultdict
 import json
 
 cursor = -1
+escape_char = "%%"
+comment_char = "%"
 
 def set_marker(position, marker):
 #    print(f"Set maker at position {position} with marker '{marker}' has been called.")
@@ -136,7 +138,7 @@ def handler(**args):
     
     resrap = Parser(mode='reverse')
     resrap.stack.scale = -1
-    resrap.set_syntax_chars(comment_char='#', escape_char='##')
+    resrap.set_syntax_chars(comment_char=comment_char, escape_char=escape_char)
     resrap.stack.emails = negative_emails
 ### Start processing
 
@@ -155,7 +157,7 @@ def handler(**args):
     
 ### Start status transfer
     parser = Parser(mode='normal')
-    parser.set_syntax_chars(comment_char='#', escape_char='##')  # set the syntax
+    parser.set_syntax_chars(comment_char=comment_char, escape_char=escape_char)  # set the syntax
     arealist,nodelist,emails = generate_emails_by_keys(modified_keys) # set emails
     parser.stack.emails = emails
     
