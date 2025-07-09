@@ -15,6 +15,17 @@ class Node:
         if metadata:
             self.add_metadata(metadata)
 
+    def modifiable(self):
+        if self.metadata['ai']:
+            return True
+        if self.metadata['see'] or self.metadata['watch']:
+            return False
+        if not self.parent:
+            return False
+        if self.parent.type == 'ai':
+            return True
+        return False
+
     def append_content(self,line):
         self.content.append(line)
     def reverse(self):
@@ -29,27 +40,32 @@ class Node:
         output_dic = {}
         ignore_meta = ['scale','end','path','regex']
         for k, v in self.metadata.items():
-            if k not in ignore_meta:# and v and v[0]: # temply give all
+            if k not in ignore_meta and v and v[0]: # temply give all
                 if k == 'ai':
                     output_dic[f'user_request'] = v[-1]
-                    output_dic['prompt'] = "Modifiable based on user request."
+                    #output_dic['prompt'] = "Modifiable based on user request."
                 elif k == 'see':
                     output_dic[f'user_comment'] = v[-1]
-                    output_dic['prompt'] = "ReadOnly"
+                    #output_dic['prompt'] = "ReadOnly"
                 else:
                     output_dic[f'm.{k}'] = v[-1]
-        if self.metadata['path']:
-            path_entry=self.metadata['path'][-1]
-            path_entry = [x for x in path_entry]  # deep copy
-            #output_dic['path'] = str(path_entry)
-            inf_counter = 0
-            for i in path_entry:
-                if i == float('inf') or i == -float('inf'):
-                    inf_counter += 1
-            path_entry[0:inf_counter] = [inf_counter]
-            output_dic['email'] = ( '/'.join([str(x) for x in path_entry]))
+        modifiable = self.modifiable()
+        output_dic['modifiable'] = modifiable
+        if modifiable:
+            if self.metadata['path']:
+                path_entry=self.metadata['path'][-1]
+                path_entry = [x for x in path_entry]  # deep copy
+                #output_dic['path'] = str(path_entry)
+                inf_counter = 0
+                for i in path_entry:
+                    if i == float('inf') or i == -float('inf'):
+                        inf_counter += 1
+                path_entry[0:inf_counter] = [inf_counter]
+                output_dic['modify-email'] = ( '/'.join([str(x) for x in path_entry]))
         if self.type:
             output_dic['type']= self.type
+        output_dic['parent'] = self.parent.type if self.parent else "NONE"
+        
         if self.content:
             output_dic['content'] = self.content
         if self.children:

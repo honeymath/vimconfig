@@ -136,9 +136,13 @@ def handler(**args):
         if fala:
             history[i].giveback_child(fala)
             history[i].new_context_child(metadata={})
-        history[i].update(future[i])
+        try:
+            history[i].update(future[i])
+        except Exception as e:
+            print(f"Error updating history at level {i}: {e}")
+            break
         fala = history[i]
-    return {"current": current_element.to_dict(), "annotated_context": fala.to_dict(), "marker":marker, "scanned_context":lines[badcursor:goodcursor]}
+    return {"current_cursor": current_element.to_dict(), "annotated_context": fala.to_dict(), "marker":marker, "scanned_context":lines[badcursor+1:goodcursor]}
 
 if __name__ == "__main__":
     result = handler() 
