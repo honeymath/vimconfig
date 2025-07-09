@@ -211,6 +211,8 @@ def handler(**args):
     modify_area = {}
 
     for k,v in total_results.items():
+        if len(v) != 2:
+            raise Exception(f"Total results is {v}, it has a wrong length. It is supposed to be an area, two number is needed. More info: Total_results of the full area to modify = {total_results}; emails = {input_email_list}, current modify_area = {modify_area}")
         x,y = v
         if x == y:
             modify_area[k] = [x,y+1]
