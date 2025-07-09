@@ -235,8 +235,8 @@ def handler(**args):
 
     super_nodelist = {}
 
-    print("Lines before the modification")
-    print(json.dumps(lines, indent=2))
+#    print("Lines before the modification")
+#    print(json.dumps(lines, indent=2))
     for key, content_area in sorted_list:
         superkey = '/'.join([str(x) for x in list(key)])
         processed_keys.add(superkey)
@@ -250,8 +250,8 @@ def handler(**args):
             refused_keys.add(superkey)
             print(f"Modification for {superkey} is not allowed due to its properties.")
 
-    print("Lines after the modification")
-    print(json.dumps(lines, indent=2))
+#    print("Lines after the modification")
+#    print(json.dumps(lines, indent=2))
 
 ### Get those unprocessed emails
     all_keys = set(input_email_list.keys())
