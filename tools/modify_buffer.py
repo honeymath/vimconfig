@@ -8,7 +8,7 @@ cursor = -1
 def set_marker(position, marker):
 #    print(f"Set maker at position {position} with marker '{marker}' has been called.")
 #    print(f"Set maker at position {position} with marker '{marker}' has been called.\n"*40)
-    return ## I am testing
+    #return ## I am testing
     import vim
     line, col = position, 0
     bufnum = vim.current.buffer.number
@@ -50,12 +50,12 @@ def get_current_buffer():
         "#end",
     ]
 
-    return lines
+    #return lines
     return vim.current.buffer  # 获取当前缓冲区的所有行
 
 def get_position_by_marker(marker):
-    position = 8
-    return position
+    #position = 8
+    #return position
     ## commenting above lines.
     import vim
     _,line_number,colum,_ = vim.eval(f"getpos(\"'{marker}\")")  # getpos returns [bufnum, lnum, col, off]
