@@ -90,50 +90,60 @@ resrap.reverse_handle_block_match('', {}, '')  # glue line
 
 # 2. 状态传递
 parser = Parser(mode='normal')
-## optional: Set up emails:
-## The first number 2 means the number of ../, for example, to access ../../1/2, you write 2/1/2. To access  3/2 you write 0/3/2, to access 0/0, you write 0/0/0  the 
-## the email system can let the parser call fucntions while running. Used for GPT to modify the vim buffer area.
-
-## todo list: Given a dictionary of path "a/b/c", dynamic create the function parser, and send to the.
-
-## The output is a list, of the position, and a list of changing. the change will happen at the end.
-
-
-### If the parser is running with empty email, it will just return the result. If the parser is running with emails, it will return the original and the result for each one. 
-
-### Also, there should be a python file store the state. Have to have the request ID.....
-
-
-### tasks.
-# Task1: reformat the path json as a label directly used to receive emails.
-# reformat m.ai and m.see as Can/Can not Modify this area, user said:
-# Task2: Create function to translate the email list into start and end part list.
-# Task 3: Given the list of range and text, modify the original input.
-
-#dic defaultdict.
-
-
-#lamnda c: dic[email].append(cursor)
-
-## Create a state python to just store the state dictionary of vim's and also have a method to register a papa. 
-
-#modify_list = {2:{0:"replace1"}, 0:{1:"replace2"}}
-
-#modify_keys = []
-#negative_modify_keys = []
-
-
-#modify_list = {(2,0): "replace1", (0,1): "replace2", (0,2):"replacejump"}
 
 
 
-## set up emails
-results = defaultdict(list)
-function_list = {k: lambda c,k=k: results[k].append(goodcursor) for k in modify_keys}
-emails_to_send = {}
-for k,v in function_list.items():
-    caocao = list(k)
-    set_email(caocao, v, emails_to_send)
+
+## set up emails 
+
+
+def generate_emails_by_keys(modified_keys):
+    arealist = defaultdict(list)
+    nodelist = {}
+    def handle_key(key,node):
+        arealist[key].append(goodcursor)
+        nodelist[key] = node
+    ## now generate the emails 
+    emails = {}
+    for keyma in modified_keys: ## each tuple
+        key = list(keyma)
+        the_mail = emails
+        for k in key[:-1]:
+            if k in the_mail:
+                the_mail = the_mail[k]
+            else:
+                fuck = {}
+                the_mail[k]=fuck
+                the_mail = fuck
+        the_mail[key[-1]] = lambda selfish, k=keyma: handle_key(k,selfish)
+    return arealist,nodelist,emails
+
+
+### the following is thu: Results for getting the fucks., and emails_to_send
+
+#results = defaultdict(list)
+#function_list = {k: lambda c,k=k: results[k].append(goodcursor) for k in modify_keys}
+#emails_to_send = {}
+#for k,v in function_list.items():
+#    caocao = list(k)
+#    set_email(caocao, v, emails_to_send)
+
+results,nodelist,emails_to_send = generate_emails_by_keys(modify_keys)
+
+print("-"*20)
+print("The email to send\n"*10)
+print(emails_to_send)
+print("-"*20)
+print("Oh what the fuck???\n"*10)
+
+#### Expected output
+#{2: {0: <function <lambda> at 0x105078220>}, 0: {1: <function <lambda> at 0x105078360>, 2: <function <lambda> at 0x105078400>, 0: <function <lambda> at 0x1050784a0>}}
+
+####################################################
+##############################################
+
+
+
 parser.stack.emails = emails_to_send  
 ## finishing set up emails
 
@@ -154,9 +164,9 @@ parser.set_syntax_chars(comment_char='#', escape_char='##')
 goodcursor = cursor
 parser.stack[-1].new_context_child(metadata={}) ## SOF
 while parser.stack.len() > -level-1 and goodcursor < len(lines):
-    print(f"Current cursor position", goodcursor, "with line:", lines[goodcursor])
+    #print(f"Current cursor position", goodcursor, "with line:", lines[goodcursor])
     parser.parse(lines[goodcursor])
-    print(f"The parser has been runned")
+    #print(f"The parser has been runned")
 
     goodcursor += 1
 
@@ -183,10 +193,10 @@ future = parser.stack._history
 # 6. 获取光标位置的元素
 print("Element near the cursor")
 current_element = get_element_near_cursor(history, future);
-if current_element.type == "context":
-    print(f"Cursor at {json.dumps(current_element.content, indent = 2)}")
-else:
-    print(f"Cursor at {current_element.to_json(indent=2)}")
+#if current_element.type == "context":
+#    print(f"Cursor at {json.dumps(current_element.content, indent = 2)}")
+#else:
+#    print(f"Cursor at {current_element.to_json(indent=2)}")
 
 #####
 fala = None
@@ -206,7 +216,7 @@ print("Test data:"
 for line in lines:
     print(line)
 print("Final Result:")
-print(fala.to_json(indent=2))
+#print(fala.to_json(indent=2))
 
 ## Out put for the results of modifiying list for buffer to modify
 
@@ -282,8 +292,15 @@ print(json.dumps(lines, indent=2))
 
 
 ##### 
-print("The good results")
+print("The good results\n"*10)
 print(results)
+print("-"*20)
+print("The Node list")
+for k,v in nodelist.items():
+    print(f"{k}: {v.to_json(indent=2)}")
+    print("-"*20)
+print("-"*20)
+###defaultdict(<class 'list'>, {(0, 0): [7, 7], (0, 1): [7, 10], (0, 2): [10, 10], (2, 0): [14, 17]})
 print("The bad results")
 print(badresults)
 
