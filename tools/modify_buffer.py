@@ -292,7 +292,17 @@ def handler(**args):
 # 1, when modify the 0,0, we have to reset the marker. easy, 
     if (0,0) in total_results:
         start,end = total_results[(0,0)]
-        set_marker(position = (start+end)//2, marker=marker)
+        marker_position = -1
+        if end is None:
+            marker_position = start
+        if start is None:
+            marker_position = end
+        if marker_position is None: ## when both start and end are None
+            marker_position = 0
+        if marker_position == -1: ## when both start and end are not None
+            marker_position = (start+end)//2
+
+        set_marker(position = marker_position, marker=marker)
 
 
     
