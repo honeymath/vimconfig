@@ -182,6 +182,32 @@ def handler(**args):
 ## known arealist, and negative_arealist
 
     total_results = {}
+
+    for k,v in arealist.items():
+        if len(v) != 2:
+            if len(v) == 1:
+                v.append(None)
+            else:
+                raise Exception(f" The area {v} does not have correct length (correct is 1 or 2).")
+        if k == (0,0):
+            continue
+        total_results[k] = v
+
+    for k,v in negative_arealist.items():
+        if len(v) != 2:
+            if len(v) == 1:
+                v.append(None)
+            else:
+                raise Exception(f" The area {v} does not have correct length.(correct is 1 or 2)")
+        if k == (0,0):
+            continue
+        if k in total_results:
+            raise Exception(f"How come a negative key appear in total results?")
+        total_results[k] = [v[1],v[0]] ## reverse because it is in history
+
+
+## now deal with the (0,0) area.
+
     if (0,0) in arealist:
         if (0,0) not in negative_arealist:
             raise Exception("If (0,0) in arealist, it should also appear in historical bad arealist")
@@ -191,18 +217,6 @@ def handler(**args):
             print(f"start,smid,emid,end: {start,smid,emid,end}")
             raise Exception("The end of (0,0) or start of (0,0) does not match the cursor.")
         total_results[(0,0)] = [start, end]
-
-    for k,v in arealist.items():
-        if k == (0,0):
-            continue
-        total_results[k] = v
-    for k,v in negative_arealist.items():
-        if k == (0,0):
-            continue
-        if k in total_results:
-            raise Exception(f"How come a negative key appear in total results?")
-        total_results[k] = [v[1],v[0]] ## reverse because it is in history
-
 ##### The total results should be able to listed. then the 
 
 
