@@ -3,7 +3,7 @@
 
 This `.vimrc` configuration enables advanced navigation capabilities within Vim, allowing you to quickly enter a folder view or escape from a file using specific keybindings.
 
-
+[](.vimrc)
 [](.vimrc_windows)
 [](LICENSE)
 

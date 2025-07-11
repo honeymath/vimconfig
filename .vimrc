@@ -98,33 +98,12 @@ set backspace=2
 set guioptions-=r
 set nu
 
-"The following is used may hax files
-"syntax on
-"autocmd FileType hx colorscheme haxe
-"colorscheme haxe
 
-"The following commands are used previously to open fufufuffu
-":cd ~/Dropbox/Latex
-":e ini.tex
-" ahahahahaha
 
-":cd ~/Desktop/big/github/Linkus-Server
-":let counter=[]
-":let position=[]
 :map <Backspace> X
-":map ≥ :!(cd ~/Dropbox/Latex && latex -shell-escape main && bibtex main && latex -shell-escape main && makeindex -s nomencl.ist -t "main.nlg" -o "main.nls" "main.nlo"&& pdflatex -shell-escape main && open -a '/Applications/Skim.app' main.pdf)<CR><CR>
-":map ≥ <Plug>MarkdownPreview
-":map ≤ :!(cd ~/Dropbox/Latex && pdflatex -shell-escape main && open -a '/Applications/Skim.app' main.pdf)<CR><CR>
-":map ≤ :!(pdflatex --synctex=1 -shell-escape main && open main.pdf && cp main.pdf ~/Desktop)<CR><CR>
 
 :map « :call SmartCtrlO()<CR>
-":map « :execute 'source ' . local_path . '/escape.vim'<CR>
-":map \ :execute 'source ' . local_path . '/main.vim'<CR>
-"I wanna map \ to whenever it is markdown file, then it doing %gf, when it is latex, it doing %%gf
-":map \ 
-":map \ gf<CR>
 
-":map œ :execute 'source ' . local_path . '/change.vim'<CR>
 
 :map <D-Bslash> /src=\\|href=\\|<r><CR>
 
@@ -134,24 +113,13 @@ set nu
 :map ˙ :tabp<CR>
 :map ¬ :tabn<CR>
 :map Ω :execute "!(open ".expand('%:p:h').")"<CR><CR>
-":map ≈ :execute "!(/usr/bin/open -a '/Applications/Google Chrome.app' '".expand('%:p')."')"<CR><CR>
 :map ≈ :execute "!open -a Terminal.app '".expand('%:p:h')."'"<CR><CR>
 :map ∑ :.s/^-\(\s*\)/\\item\1<CR>
-":map ≈ :execute "!(/usr/bin/open -a '/Applications/Google Chrome.app' 'http://127.0.0.1:8000')"<CR><CR>
 :map ª :execute "!(/usr/bin/open -a '/Applications/Google Chrome.app' '@@/index.html')"<CR><CR>
 :map å :cd %:p:h<CR>
-":map • :e @@/API.js<CR>
-":map œ :source ~/Dropbox/Latex/readme.md<CR>
 :map ¢ :source test.vim<CR>
-":map º :cd @/MAT<CR>
 
 :map ¡ :execute 'e ' . local_path . '/readme.md'<CR>
-":map £ :execute 'e ' . local_path . '/Jobs/prof.md'<CR>
-":map ¢ :execute 'e ' . local_path . '/Jobs/postdoc.md'<CR>
-":map ∞ :execute 'e ' . local_path . '/../website/honeymath.github.io/README.md'<CR>
-":map § :execute 'e ' . local_path . '/Berkeley/README.md'<CR>
-":map • :execute 'e ' . 'list.md'<CR>
-":map ™ :execute 'e ' . 'markdown/Diary.md'<CR>Gzz
 :map ÷ :execute '!rm ' . local_path . '/main.aux'<CR>:execute '!rm ' . local_path . '/main.toc'<CR>:execute '!rm ' . local_path . '/main.bbl'<CR>
 
 :map … /\\a\(\\\\|{\)<CR>
@@ -169,23 +137,14 @@ inoremap <C-Z> <C-]>
 
 :command W w
 
-"(set of `iab` and `lab` commands omitted for brevity here — ask if you'd like them included again)
 
-":nnoremap gf :execute 'source ' . local_path . '/main.vim'<CR>
-":nnoremap gl :execute 'source ' . local_path . '/escape.vim'<CR>
-":nnoremap ga :execute 'e ' . local_path . '/readme.md'<CR>
 
-"set iskeyword=@,192-255
 
-"autocmd BufEnter * if expand('%:p') == 'Users/qiruili/.vimrc'|echo 'it is vimrc file'|endif
 autocmd BufEnter main.tex,ReadMe.md execute('cd '.expand('%:p:h'))
-"autocmd BufEnter */fuck/readme.md execute 'source '.fnamemodify(local_path.'/date.vim', ':p')
 
-"After write up a buffer, run git command
 " the following just add up to git
 au BufWritePost * silent !(git add %:p)
 
-":map ` :highlight Normal ctermfg=white guifg=white <CR>:highlight folded ctermfg=yellow ctermbg=black guifg=yellow guibg=black<CR>:source ~/Dropbox/Latex/fold.md<CR>zr
 
 " Python settings
 au BufNewFile,BufRead *.py set expandtab
@@ -193,291 +152,287 @@ au BufNewFile,BufRead *.py set shiftwidth=4
 au BufNewFile,BufRead *.py set softtabstop=4
 au BufNewFile,BufRead *.py set tabstop=4
 
-:iab AA ⋀
-:iab VV ⋁
-:iab /\/\ ♡
-:iab [- ∈
-:iab \[- ∉
-:iab -] ∋
-:iab \-] ∌
-:iab ¬ ⊥
-:iab l__ ⌊
-:iab __l ⌋
-:iab ¯¯l ⌉
-:iab l¯¯ ⌈
-:iab <=> ⟺
-:iab ⟸> ⟺
-:iab => ⟹
+autocmd FileType tex iabbrev AA ⋀
+autocmd FileType tex iabbrev VV ⋁
+autocmd FileType tex iabbrev /\/\ ♡
+autocmd FileType tex iabbrev [- ∈
+autocmd FileType tex iabbrev \[- ∉
+autocmd FileType tex iabbrev -] ∋
+autocmd FileType tex iabbrev \-] ∌
+autocmd FileType tex iabbrev ¬ ⊥
+autocmd FileType tex iabbrev l__ ⌊
+autocmd FileType tex iabbrev __l ⌋
+autocmd FileType tex iabbrev ¯¯l ⌉
+autocmd FileType tex iabbrev l¯¯ ⌈
+autocmd FileType tex iabbrev <=> ⟺
+autocmd FileType tex iabbrev ⟸> ⟺
+autocmd FileType tex iabbrev => ⟹
 autocmd FileType tex :iab <= ⟸
 autocmd FileType python :iab <= ⟸  |iunabbrev <=
 ":iab <= ⟸
-:iab << ⊆
-:iab nn ∩
-:iab φφ ϕ
-:iab uu ∪
-:iab ><< ⊈
-:iab <>> ⊉
-:iab >>>> ⊇
-:iab O+ ⨁
-:iab OX ⨂
-:iab ~= ≅
-:iab ~~ ≈
+autocmd FileType tex iabbrev << ⊆
+autocmd FileType tex iabbrev nn ∩
+autocmd FileType tex iabbrev φφ ϕ
+autocmd FileType tex iabbrev uu ∪
+autocmd FileType tex iabbrev ><< ⊈
+autocmd FileType tex iabbrev <>> ⊉
+autocmd FileType tex iabbrev >>>> ⊇
+autocmd FileType tex iabbrev O+ ⨁
+autocmd FileType tex iabbrev OX ⨂
+autocmd FileType tex iabbrev ~= ≅
+autocmd FileType tex iabbrev ~~ ≈
 autocmd FileType tex :iab == ≡
 autocmd FileType python :iab == ≡|iunabbrev ==
 ":iab == ≡
-:iab ≅-> ⥱
-:iab ≅−> ⥱
-:iab ~=⟶  ⥱
-:iab ~=-> ⥱
-:iab ~=−> ⥱
-:iab ~≠ ≇
-:iab ?= ≟
-:iab ∑∑ ∃
-:iab ∏∏ ∀
-:iab ±± ∓
-:iab (-> ↪
-:iab (−> ↪
-:iab <-) ↩
-:iab <−) ↩
-:iab ←) ↩
-:iab ->> ↠
-:iab −>> ↠
-:iab <<- ↞
-:iab <<− ↞
-:iab -> ⟶
-:iab −> ⟶
-":iab -> ➔
-:iab <- ⟵
-:iab <− ⟵
-:iab <−> ⟵
-:iab ⟵> ↔
-":iab <- ⬅ 
-:iab --> ⤍
-:iab −-> ⤍
-:iab −−> ⤍
-:iab ⟵- ⤌
-":iab ⬅- ⤌
-:iab l-> ↦
-:iab <-l ↤
-:iab l−> ↦
-:iab llv ↧
-:iab lla ↥
-:iab lV ⭣
-:iab lv ⭣
-:iab lA ⭡
-:iab la ⭡
-:iab <> ⬨
-":iab ** ⁎
-:iab \\\ ∖
-":iab [] ∎
+autocmd FileType tex iabbrev ≅-> ⥱
+autocmd FileType tex iabbrev ≅−> ⥱
+autocmd FileType tex iabbrev ~=⟶  ⥱
+autocmd FileType tex iabbrev ~=-> ⥱
+autocmd FileType tex iabbrev ~=−> ⥱
+autocmd FileType tex iabbrev ~≠ ≇
+autocmd FileType tex iabbrev ?= ≟
+autocmd FileType tex iabbrev ∑∑ ∃
+autocmd FileType tex iabbrev ∏∏ ∀
+autocmd FileType tex iabbrev ±± ∓
+autocmd FileType tex iabbrev (-> ↪
+autocmd FileType tex iabbrev (−> ↪
+autocmd FileType tex iabbrev <-) ↩
+autocmd FileType tex iabbrev <−) ↩
+autocmd FileType tex iabbrev ←) ↩
+autocmd FileType tex iabbrev ->> ↠
+autocmd FileType tex iabbrev −>> ↠
+autocmd FileType tex iabbrev <<- ↞
+autocmd FileType tex iabbrev <<− ↞
+autocmd FileType tex iabbrev -> ⟶
+autocmd FileType tex iabbrev −> ⟶
+autocmd FileType tex iabbrev <- ⟵
+autocmd FileType tex iabbrev <− ⟵
+autocmd FileType tex iabbrev <−> ⟵
+autocmd FileType tex iabbrev ⟵> ↔
+autocmd FileType tex iabbrev --> ⤍
+autocmd FileType tex iabbrev −-> ⤍
+autocmd FileType tex iabbrev −−> ⤍
+autocmd FileType tex iabbrev ⟵- ⤌
+autocmd FileType tex iabbrev l-> ↦
+autocmd FileType tex iabbrev <-l ↤
+autocmd FileType tex iabbrev l−> ↦
+autocmd FileType tex iabbrev llv ↧
+autocmd FileType tex iabbrev lla ↥
+autocmd FileType tex iabbrev lV ⭣
+autocmd FileType tex iabbrev lv ⭣
+autocmd FileType tex iabbrev lA ⭡
+autocmd FileType tex iabbrev la ⭡
+autocmd FileType tex iabbrev <> ⬨
+autocmd FileType tex iabbrev \\\ ∖
+"autocmd FileType tex iabbrev [] ∎
 ":lab lx ⋉
-":iab xl ⋊
-:iab xoo ⊠
-:iab poo ⊞
+"autocmd FileType tex iabbrev xl ⋊
+autocmd FileType tex iabbrev xoo ⊠
+autocmd FileType tex iabbrev poo ⊞
 
-":iab^0 <BS>⁰
-":iab^2 <BS>²
-":iab^3 <BS>³
-":iab^4 <BS>⁴
-":iab^5 <BS>⁵
-":iab^6 <BS>⁶
-":iab^7 <BS>⁷
-":iab^8 <BS>⁸
-":iab^9 <BS>⁹
+"autocmd FileType tex iabbrev^0 <BS>⁰
+"autocmd FileType tex iabbrev^2 <BS>²
+"autocmd FileType tex iabbrev^3 <BS>³
+"autocmd FileType tex iabbrev^4 <BS>⁴
+"autocmd FileType tex iabbrev^5 <BS>⁵
+"autocmd FileType tex iabbrev^6 <BS>⁶
+"autocmd FileType tex iabbrev^7 <BS>⁷
+"autocmd FileType tex iabbrev^8 <BS>⁸
+"autocmd FileType tex iabbrev^9 <BS>⁹
 
-":iab_0 <BS>₀
-":iab_1 <BS>₁
-":iab_2 <BS>₂
-":iab_3 <BS>₃
-":iab_4 <BS>₄
-":iab_5 <BS>₅
-":iab_6 <BS>₆
-":iab_7 <BS>₇
-":iab_8 <BS>₈
-":iab_9 <BS>₉
+"autocmd FileType tex iabbrev_0 <BS>₀
+"autocmd FileType tex iabbrev_1 <BS>₁
+"autocmd FileType tex iabbrev_2 <BS>₂
+"autocmd FileType tex iabbrev_3 <BS>₃
+"autocmd FileType tex iabbrev_4 <BS>₄
+"autocmd FileType tex iabbrev_5 <BS>₅
+"autocmd FileType tex iabbrev_6 <BS>₆
+"autocmd FileType tex iabbrev_7 <BS>₇
+"autocmd FileType tex iabbrev_8 <BS>₈
+"autocmd FileType tex iabbrev_9 <BS>₉
 
-:iab^+ <BS>⁺
-:iab^- <BS>⁻
-
-
-":iab- −
-
-:iab_+ <BS>₊
-:iab_- <BS>₋
-
-:iab xx ×
-:iab oo ⚬
-:iab ,, ␣
-:iab UUU ∐
-:iab ππ ϖ
+autocmd FileType tex iabbrev^+ <BS>⁺
+autocmd FileType tex iabbrev^- <BS>⁻
 
 
-:iab bA 𝔸
-:iab bB 𝔹
-:iab bC ℂ
-:iab bD 𝔻
-:iab bE 𝔼
-:iab bF 𝔽
-:iab bG 𝔾
-:iab bH ℍ
-:iab bI 𝕀
-:iab bJ 𝕁
-:iab bK 𝕂
-:iab bL 𝕃
-:iab bM 𝕄
-:iab bN ℕ
-:iab bO 𝕆
-:iab bP ℙ
-:iab bQ ℚ
-:iab bR ℝ
-:iab bS 𝕊
-:iab bT 𝕋
-:iab bU 𝕌
-:iab bV 𝕍
-:iab bW 𝕎
-:iab bX 𝕏
-:iab bY 𝕐
-:iab bZ ℤ
+"autocmd FileType tex iabbrev- −
+
+autocmd FileType tex iabbrev_+ <BS>₊
+autocmd FileType tex iabbrev_- <BS>₋
+
+autocmd FileType tex iabbrev xx ×
+autocmd FileType tex iabbrev oo ⚬
+autocmd FileType tex iabbrev ,, ␣
+autocmd FileType tex iabbrev UUU ∐
+autocmd FileType tex iabbrev ππ ϖ
 
 
-:iab sA 𝒜
-:iab sB ℬ
-:iab sC 𝒞
-:iab sD 𝒟
-:iab sE ℰ
-:iab sF ℱ
-:iab sG 𝒢
-:iab sH ℋ
-:iab sI ℐ
-:iab sJ 𝒥
-:iab sK 𝒦
-:iab sL ℒ
-:iab sM ℳ
-:iab sN 𝒩
-:iab sO 𝒪
-:iab sP 𝒫
-:iab sQ 𝒬
-:iab sR ℛ
-:iab sS 𝒮
-:iab sT 𝒯
-:iab sU 𝒰
-:iab sV 𝒱
-:iab sW 𝒲
-:iab sX 𝒳
-:iab sY 𝒴
-:iab sZ 𝒵
-
-:iab fkA 𝕬
-:iab fkB 𝕭
-:iab fkC 𝕮
-:iab fkD 𝕯
-:iab fkE 𝕰
-:iab fkF 𝕱
-:iab fkG 𝕲
-:iab fkH 𝕳
-:iab fkI 𝕴
-:iab fkJ 𝕵
-:iab fkK 𝕶
-:iab fkL 𝕷
-:iab fkM 𝕸
-:iab fkN 𝕹
-:iab fkO 𝕺
-:iab fkP 𝕻
-:iab fkQ 𝕼
-:iab fkR 𝕽
-:iab fkS 𝕾
-:iab fkT 𝕿
-:iab fkU 𝖀
-:iab fkV 𝖁
-:iab fkW 𝖂
-:iab fkX 𝖃
-:iab fkY 𝖄
-:iab fkZ 𝖅
-:iab fka 𝖆
-:iab fkb 𝖇
-:iab fkc 𝖈
-:iab fkd 𝖉
-:iab fke 𝖊
-:iab fkf 𝖋
-:iab fkg 𝖌
-:iab fkh 𝖍
-:iab fki 𝖎
-:iab fkj 𝖏
-:iab fkk 𝖐
-:iab fkl 𝖑
-:iab fkm 𝖒
-:iab fkn 𝖓
-:iab fko 𝖔
-:iab fkp 𝖕
-:iab fkq 𝖖
-:iab fkr 𝖗
-:iab fks 𝖘
-:iab fkt 𝖙
-:iab fku 𝖚
-:iab fkv 𝖛
-:iab fkw 𝖜
-:iab fkx 𝖝
-:iab fky 𝖞
-:iab fkz 𝖟
-
-:iab ba 𝗮
-:iab bb 𝗯
-:iab bc 𝗰
-:iab bd 𝗱
-:iab bbe 𝗲
-:iab bf 𝗳
-:iab bg 𝗴
-:iab bh 𝗵
-:iab bi 𝗶
-:iab bj 𝗷
-:iab bk 𝗸
-:iab bl 𝗹
-:iab bm 𝗺
-:iab bn 𝗻
-:iab bo 𝗼
-:iab bp 𝗽
-:iab bq 𝗾
-:iab br 𝗿
-:iab bs 𝘀
-:iab bt 𝘁
-:iab bu 𝘂
-:iab bv 𝘃
-:iab bw 𝘄
-:iab bx 𝘅
-:iab bby 𝘆
-:iab bz 𝘇
-
-:iab cA 𝘼
-:iab cB 𝘽
-:iab cC 𝘾
-:iab cD 𝘿
-:iab cE 𝙀
-:iab cF 𝙁
-:iab cG 𝙂
-:iab cH 𝙃
-:iab cI 𝙄
-:iab cJ 𝙅
-:iab cK 𝙆
-:iab cL 𝙇
-:iab cM 𝙈
-:iab cN 𝙉
-:iab cO 𝙊
-:iab cP 𝙋
-:iab cQ 𝙌
-:iab cR 𝙍
-:iab cS 𝙎
-:iab cT 𝙏
-:iab cU 𝙐
-:iab cV 𝙑
-:iab cW 𝙒
-:iab cX 𝙓
-:iab cY 𝙔
-:iab cZ 𝙕
+autocmd FileType tex iabbrev bA 𝔸
+autocmd FileType tex iabbrev bB 𝔹
+autocmd FileType tex iabbrev bC ℂ
+autocmd FileType tex iabbrev bD 𝔻
+autocmd FileType tex iabbrev bE 𝔼
+autocmd FileType tex iabbrev bF 𝔽
+autocmd FileType tex iabbrev bG 𝔾
+autocmd FileType tex iabbrev bH ℍ
+autocmd FileType tex iabbrev bI 𝕀
+autocmd FileType tex iabbrev bJ 𝕁
+autocmd FileType tex iabbrev bK 𝕂
+autocmd FileType tex iabbrev bL 𝕃
+autocmd FileType tex iabbrev bM 𝕄
+autocmd FileType tex iabbrev bN ℕ
+autocmd FileType tex iabbrev bO 𝕆
+autocmd FileType tex iabbrev bP ℙ
+autocmd FileType tex iabbrev bQ ℚ
+autocmd FileType tex iabbrev bR ℝ
+autocmd FileType tex iabbrev bS 𝕊
+autocmd FileType tex iabbrev bT 𝕋
+autocmd FileType tex iabbrev bU 𝕌
+autocmd FileType tex iabbrev bV 𝕍
+autocmd FileType tex iabbrev bW 𝕎
+autocmd FileType tex iabbrev bX 𝕏
+autocmd FileType tex iabbrev bY 𝕐
+autocmd FileType tex iabbrev bZ ℤ
 
 
-:iab 𝗯1 𝟙
-:iab bb1 𝟙
-:iab 𝗯0 𝟘
-:iab bb0 𝟘
+autocmd FileType tex iabbrev sA 𝒜
+autocmd FileType tex iabbrev sB ℬ
+autocmd FileType tex iabbrev sC 𝒞
+autocmd FileType tex iabbrev sD 𝒟
+autocmd FileType tex iabbrev sE ℰ
+autocmd FileType tex iabbrev sF ℱ
+autocmd FileType tex iabbrev sG 𝒢
+autocmd FileType tex iabbrev sH ℋ
+autocmd FileType tex iabbrev sI ℐ
+autocmd FileType tex iabbrev sJ 𝒥
+autocmd FileType tex iabbrev sK 𝒦
+autocmd FileType tex iabbrev sL ℒ
+autocmd FileType tex iabbrev sM ℳ
+autocmd FileType tex iabbrev sN 𝒩
+autocmd FileType tex iabbrev sO 𝒪
+autocmd FileType tex iabbrev sP 𝒫
+autocmd FileType tex iabbrev sQ 𝒬
+autocmd FileType tex iabbrev sR ℛ
+autocmd FileType tex iabbrev sS 𝒮
+autocmd FileType tex iabbrev sT 𝒯
+autocmd FileType tex iabbrev sU 𝒰
+autocmd FileType tex iabbrev sV 𝒱
+autocmd FileType tex iabbrev sW 𝒲
+autocmd FileType tex iabbrev sX 𝒳
+autocmd FileType tex iabbrev sY 𝒴
+autocmd FileType tex iabbrev sZ 𝒵
+
+autocmd FileType tex iabbrev fkA 𝕬
+autocmd FileType tex iabbrev fkB 𝕭
+autocmd FileType tex iabbrev fkC 𝕮
+autocmd FileType tex iabbrev fkD 𝕯
+autocmd FileType tex iabbrev fkE 𝕰
+autocmd FileType tex iabbrev fkF 𝕱
+autocmd FileType tex iabbrev fkG 𝕲
+autocmd FileType tex iabbrev fkH 𝕳
+autocmd FileType tex iabbrev fkI 𝕴
+autocmd FileType tex iabbrev fkJ 𝕵
+autocmd FileType tex iabbrev fkK 𝕶
+autocmd FileType tex iabbrev fkL 𝕷
+autocmd FileType tex iabbrev fkM 𝕸
+autocmd FileType tex iabbrev fkN 𝕹
+autocmd FileType tex iabbrev fkO 𝕺
+autocmd FileType tex iabbrev fkP 𝕻
+autocmd FileType tex iabbrev fkQ 𝕼
+autocmd FileType tex iabbrev fkR 𝕽
+autocmd FileType tex iabbrev fkS 𝕾
+autocmd FileType tex iabbrev fkT 𝕿
+autocmd FileType tex iabbrev fkU 𝖀
+autocmd FileType tex iabbrev fkV 𝖁
+autocmd FileType tex iabbrev fkW 𝖂
+autocmd FileType tex iabbrev fkX 𝖃
+autocmd FileType tex iabbrev fkY 𝖄
+autocmd FileType tex iabbrev fkZ 𝖅
+autocmd FileType tex iabbrev fka 𝖆
+autocmd FileType tex iabbrev fkb 𝖇
+autocmd FileType tex iabbrev fkc 𝖈
+autocmd FileType tex iabbrev fkd 𝖉
+autocmd FileType tex iabbrev fke 𝖊
+autocmd FileType tex iabbrev fkf 𝖋
+autocmd FileType tex iabbrev fkg 𝖌
+autocmd FileType tex iabbrev fkh 𝖍
+autocmd FileType tex iabbrev fki 𝖎
+autocmd FileType tex iabbrev fkj 𝖏
+autocmd FileType tex iabbrev fkk 𝖐
+autocmd FileType tex iabbrev fkl 𝖑
+autocmd FileType tex iabbrev fkm 𝖒
+autocmd FileType tex iabbrev fkn 𝖓
+autocmd FileType tex iabbrev fko 𝖔
+autocmd FileType tex iabbrev fkp 𝖕
+autocmd FileType tex iabbrev fkq 𝖖
+autocmd FileType tex iabbrev fkr 𝖗
+autocmd FileType tex iabbrev fks 𝖘
+autocmd FileType tex iabbrev fkt 𝖙
+autocmd FileType tex iabbrev fku 𝖚
+autocmd FileType tex iabbrev fkv 𝖛
+autocmd FileType tex iabbrev fkw 𝖜
+autocmd FileType tex iabbrev fkx 𝖝
+autocmd FileType tex iabbrev fky 𝖞
+autocmd FileType tex iabbrev fkz 𝖟
+
+autocmd FileType tex iabbrev ba 𝗮
+autocmd FileType tex iabbrev bb 𝗯
+autocmd FileType tex iabbrev bc 𝗰
+autocmd FileType tex iabbrev bd 𝗱
+autocmd FileType tex iabbrev bbe 𝗲
+autocmd FileType tex iabbrev bf 𝗳
+autocmd FileType tex iabbrev bg 𝗴
+autocmd FileType tex iabbrev bh 𝗵
+autocmd FileType tex iabbrev bi 𝗶
+autocmd FileType tex iabbrev bj 𝗷
+autocmd FileType tex iabbrev bk 𝗸
+autocmd FileType tex iabbrev bl 𝗹
+autocmd FileType tex iabbrev bm 𝗺
+autocmd FileType tex iabbrev bn 𝗻
+autocmd FileType tex iabbrev bo 𝗼
+autocmd FileType tex iabbrev bp 𝗽
+autocmd FileType tex iabbrev bq 𝗾
+autocmd FileType tex iabbrev br 𝗿
+autocmd FileType tex iabbrev bs 𝘀
+autocmd FileType tex iabbrev bt 𝘁
+autocmd FileType tex iabbrev bu 𝘂
+autocmd FileType tex iabbrev bv 𝘃
+autocmd FileType tex iabbrev bw 𝘄
+autocmd FileType tex iabbrev bx 𝘅
+autocmd FileType tex iabbrev bby 𝘆
+autocmd FileType tex iabbrev bz 𝘇
+
+autocmd FileType tex iabbrev cA 𝘼
+autocmd FileType tex iabbrev cB 𝘽
+autocmd FileType tex iabbrev cC 𝘾
+autocmd FileType tex iabbrev cD 𝘿
+autocmd FileType tex iabbrev cE 𝙀
+autocmd FileType tex iabbrev cF 𝙁
+autocmd FileType tex iabbrev cG 𝙂
+autocmd FileType tex iabbrev cH 𝙃
+autocmd FileType tex iabbrev cI 𝙄
+autocmd FileType tex iabbrev cJ 𝙅
+autocmd FileType tex iabbrev cK 𝙆
+autocmd FileType tex iabbrev cL 𝙇
+autocmd FileType tex iabbrev cM 𝙈
+autocmd FileType tex iabbrev cN 𝙉
+autocmd FileType tex iabbrev cO 𝙊
+autocmd FileType tex iabbrev cP 𝙋
+autocmd FileType tex iabbrev cQ 𝙌
+autocmd FileType tex iabbrev cR 𝙍
+autocmd FileType tex iabbrev cS 𝙎
+autocmd FileType tex iabbrev cT 𝙏
+autocmd FileType tex iabbrev cU 𝙐
+autocmd FileType tex iabbrev cV 𝙑
+autocmd FileType tex iabbrev cW 𝙒
+autocmd FileType tex iabbrev cX 𝙓
+autocmd FileType tex iabbrev cY 𝙔
+autocmd FileType tex iabbrev cZ 𝙕
+
+
+autocmd FileType tex iabbrev 𝗯1 𝟙
+autocmd FileType tex iabbrev bb1 𝟙
+autocmd FileType tex iabbrev 𝗯0 𝟘
+autocmd FileType tex iabbrev bb0 𝟘
 
 :clearjumps
