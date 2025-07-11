@@ -3,6 +3,7 @@ import threading
 import json
 import uuid
 import os
+import configparser
 
 class Client:
     def __init__(self, conn, client_id, server):
@@ -94,21 +95,37 @@ class Client:
 
 class VimSocketServer:
     def __init__(self, socket_path=None):
+        ## When the socket path is not given, load from the ini file
         if not socket_path:
-            socket_path = os.path.join(os.path.dirname(__file__), "vimsocket")
-        self.socket_path = socket_path
+            config = configparser.ConfigParser()
+            config.read(os.path.join(os.path.dirname(__file__), "config.ini"))
+            if 'server' in config and 'host' in config['server'] and 'port' in config['server']:
+                self.socket_path = config['server']['host']+":"+config['server']['port']
+            else:
+                self.socket_path = os.path.join(os.path.dirname(__file__), "vimsocket")
+                print("Configuration file not found, using defulat path:", socket_path)
+        else:
+            self.socket_path = socket_path
         self.sock = None
         self.clients = {}
         self.next_client_id = 1
         self.running = True
 
     def start(self):
-        if os.path.exists(self.socket_path):
-            os.unlink(self.socket_path)
-#        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#        self.sock.bind(self.socket_path)
-        self.sock.bind(('0.0.0.0', 8765))
+        ### first determine if self.socket_path is a unix path or a tcp path. a tcp path like x.y.z.t:nnnn a unix path like filename.
+        if ':' in self.socket_path:
+            # Assuming it is a TCP path
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            host, port = self.socket_path.split(':')
+            port = int(port)
+            self.sock.bind((host, port))
+        else:
+            # Assuming it is a Unix socket path
+            self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            if os.path.exists(self.socket_path):
+                os.unlink(self.socket_path) # remove the old socket file if exists
+            self.sock.bind(self.socket_path)
+        #self.sock.bind(('0.0.0.0', 8765))
         self.sock.listen()
         print(f"Second server listening at {self.socket_path}")
 

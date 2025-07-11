@@ -4,13 +4,15 @@ set nocompatible              " be iMproved, required
 filetype off                  " required
 syntax on
 
-source ~/repositories/syncpdf-remote/synccurl.vim
-source ~/repositories/syncpdf-remote/worker.vim
+if isdirectory('~/repositories/syncpdf-remote')
+	source ~/repositories/syncpdf-remote/synccurl.vim
+	source ~/repositories/syncpdf-remote/worker.vim
+endif
 source ~/repositories/vimconfig/channel.vim
 
-call plug#begin('~/.vim/plugged')
-Plug 'github/copilot.vim'
-call plug#end()
+"call plug#begin('~/.vim/plugged')
+"Plug 'github/copilot.vim'
+"call plug#end()
 
 if has("termguicolors")
   let &t_SI = "\e[6 q"   " I-beam in Insert mode

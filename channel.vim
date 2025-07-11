@@ -1,5 +1,36 @@
 "let s:socket_path = 'unix:'. expand('<sfile>:p:h') . '/vimsocket'
-let s:socket_path = 'localhost:8765'
+let s:config_file_path = expand('<sfile>:p:h') . '/config.ini'
+let config_lines = readfile(s:config_file_path)
+let host = ""
+let port = ""
+for line in config_lines
+    let line = trim(line)
+    if line ==# '' || line =~# '^\s*[#;]'
+        continue
+    endif
+    if line =~# '^\s*\w\+\s*='
+        let parts = split(line, '=')
+        if len(parts)>=2
+            let key = trim(parts[0])
+            let value = trim(parts[1])
+            if key == "port"
+                let port = value
+            endif
+            if key == "host"
+                let host = value
+            endif
+        endif
+    endif
+endfor
+if  host ==# "" || port ==# ""
+    echoerr "Missing host or port in config.ini"
+    finish
+endif
+
+
+let s:socket_path = host.":".port
+    
+"let s:socket_path = '192.168.2.51:8765'
 let s:tools_path = expand('<sfile>:p:h') . '/tools'
 
 "let s:socket_path = 'vimsocket'
@@ -43,6 +74,14 @@ func OpenChannel()
 	"let channel = ch_open("localhost:8765", {"callback": "Handle", "mode": "json"})
 	let g:vimsocket_ch = channel
 	echomsg channel
+    return channel
 endfunc
 
-call OpenChannel()
+let s:msg = "fail"
+let s:attempts = 0
+let s:maxattempts = 20
+while s:msg =~# "fail" && s:attempts < s:maxattempts
+    let s:attempts = s:attempts +1
+    let s:msg = OpenChannel()
+    sleep 100m
+endwhile
