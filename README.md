@@ -3,9 +3,9 @@
 
 This `.vimrc` configuration enables advanced navigation capabilities within Vim, allowing you to quickly enter a folder view or escape from a file using specific keybindings.
 
-[](test/readme.md)
 
 [](.vimrc_windows)
+[](LICENSE)
 
 ## AI Tool Configuration
 
@@ -51,5 +51,4 @@ Note that if your server and local machine are different, then both your server 
 - Press `Option+\` to escape back out of a file.
 
 For example, try using the keybindings on the following markdown link:
-
-[test](test.py)
+[](tools/ex1.md)

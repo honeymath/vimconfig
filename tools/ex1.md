@@ -11,7 +11,7 @@ Sometimes, there is a see block inside ai block, in which the ai can not modify.
 ```ai: modify the following
 Here is one content that ai can modify
 ```see: do you have any comment?
-This is a holy fucking area that AI cann not modify
+This is a holy area that AI cann not modify
 ```end
 OK, you have anything in mind?
 ```end
