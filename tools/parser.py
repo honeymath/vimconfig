@@ -35,18 +35,18 @@ class Node:
             self.metadata[key].reverse()
         for child in self.children:
             child.reverse()
-
+#see: try try try miao
     def to_dict(self):
         output_dic = {}
         ignore_meta = ['scale','end','path','regex']
         for k, v in self.metadata.items():
             if k not in ignore_meta and v and v[0]: # temply give all
                 if k == 'ai':
-                    output_dic[f'user_request'] = v[-1]
-                    #output_dic['prompt'] = "Modifiable based on user request."
+                    output_dic[f'ai_instruction'] = v[-1]
                 elif k == 'see':
-                    output_dic[f'user_comment'] = v[-1]
-                    #output_dic['prompt'] = "ReadOnly"
+                    output_dic[f'ai_instruction(do not modify block)'] = v[-1]
+                elif k == 'watch':
+                    output_dic[f'ai_instruction(do not modify block)'] = v[-1]
                 else:
                     output_dic[f'm.{k}'] = v[-1]
         modifiable = self.modifiable()
@@ -61,17 +61,17 @@ class Node:
                     if i == float('inf') or i == -float('inf'):
                         inf_counter += 1
                 path_entry[0:inf_counter] = [inf_counter]
-                output_dic['to'] = ( '/'.join([str(x) for x in path_entry]))
+                output_dic['block_path'] = ( '/'.join([str(x) for x in path_entry]))
         if self.type:
             output_dic['type']= self.type
         output_dic['parent'] = self.parent.type if self.parent else "NONE"
         
         if self.content:
-            output_dic['content'] = self.content
+            output_dic['content'] = '\n'.join(self.content)
         if self.children:
             output_dic['children'] = [child.to_dict() for child in self.children]
         return output_dic
-
+#end
     def to_json(self, indent=2):
         return json.dumps(self.to_dict(), indent=indent)
     

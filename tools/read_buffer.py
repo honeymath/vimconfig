@@ -6,6 +6,25 @@ import vim
 escape_char = "%%"
 comment_char = "%"
 
+def set_chars():
+    global escape_char, comment_char
+    import vim
+    filetype = vim.eval("b:current_syntax").strip()
+    if filetype == "python":
+        escape_char = "##"
+        comment_char = "#"
+    elif filetype == "plaintex":
+        escape_char = "%%"
+        comment_char = "%"
+    elif filetype == "markdown":
+        escape_char = ">>"
+        comment_char = ">"
+    else:
+        escape_char = "##"
+        comment_char = "#"
+
+set_chars()
+
 def get_current_buffer():
     # ✨ 输入数据
     """
@@ -145,7 +164,11 @@ def handler(**args):
             print(f"Error updating history at level {i}: {e}")
             break
         fala = history[i]
-    return {"current_cursor": current_element.to_dict(), "annotated_context": fala.to_dict(), "marker":marker, "scanned_context":lines[badcursor+1:goodcursor],"hint":"To modify the content, use 'to: n/n/n' to refer to the block, and 'content: your replaced content' to modify it."}
+    return {"current_cursor": current_element.to_dict(), 
+        "annotated_context": fala.to_dict(), 
+        "marker":marker, 
+        #"scanned_context":lines[badcursor+1:goodcursor],
+        "hint":"Each modifyiable block contains  'block_path:' to label the block, use  'content: your replaced content' to modify it. Use strings to modify, not list of rows."}
 
 if __name__ == "__main__":
     result = handler() 

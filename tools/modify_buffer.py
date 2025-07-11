@@ -7,6 +7,25 @@ cursor = -1
 escape_char = "%%"
 comment_char = "%"
 
+def set_chars():
+    global escape_char, comment_char
+    import vim
+    filetype = vim.eval("b:current_syntax").strip()
+    if filetype == "python":
+        escape_char = "##"
+        comment_char = "#"
+    elif filetype == "plaintex":
+        escape_char = "%%"
+        comment_char = "%"
+    elif filetype == "markdown":
+        escape_char = ">>"
+        comment_char = ">"
+    else:
+        escape_char = "##"
+        comment_char = "#"
+
+set_chars()
+
 def set_marker(position, marker):
 #    print(f"Set maker at position {position} with marker '{marker}' has been called.")
 #    print(f"Set maker at position {position} with marker '{marker}' has been called.\n"*40)
@@ -228,10 +247,12 @@ def handler(**args):
         if len(v) != 2:
             raise Exception(f"Total results is {v}, it has a wrong length. It is supposed to be an area, two number is needed. More info: Total_results of the full area to modify = {total_results}; emails = {input_email_list}, current modify_area = {modify_area}")
         x,y = v
-        if x == y:
+        if x == y and y is not None:
             modify_area[k] = [x,y+1]
-        else:
+        elif x is not None:
             modify_area[k] = [x+1,y]
+        else:
+            modify_area[k] = [x,y]
 
 
     sorted_list = sorted(modify_area.items(), key=lambda item: item[1][0], reverse=True)

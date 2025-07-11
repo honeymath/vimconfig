@@ -50,5 +50,6 @@ Note that if your server and local machine are different, then both your server 
 - Press `\` to enter a markdown-like navigation view.
 - Press `Option+\` to escape back out of a file.
 
+
 For example, try using the keybindings on the following markdown link:
 [](tools/ex1.md)
