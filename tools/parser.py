@@ -97,7 +97,7 @@ class Node:
             the_path = [x for x in self.metadata['path'][-1]] ## deep copy
             number_children = len(self.children)
             address = number_children * the_scale
-            if self.emails and address in self.emails:
+            if self.emails and not callable(self.emails) and address in self.emails:
                 child.emails = self.emails[address]
                 #print(f"Child emails: {child.emails}")
                 #print("Initial calling of email.")

@@ -327,12 +327,29 @@ def handler(**args):
 
 
     
-    return {
-        "unprocessed_emails": unprocessed_emails,
+    rabbisher = {
+        "unprocessed_emails": list(unprocessed_emails.keys()),
         "processed_emails": processed_emails,
-        "refused_emails": refused_emails,
+        "refused_emails": list(refused_emails.keys()),
         "marker": marker,
+        "warning":[],
     }
+    if unprocessed_keys:
+        rabbisher["warning"].append(f"Some emails were not processed, it might because the system can not locate the element by the provided block path.")
+    if refused_keys:
+        rabbisher["warning"].append(f"Emails were refused. Block element were found but modification is not allowed. Please check the properties of the block element.")
+    
+    hobaxiubanimama = json.dumps(rabbisher, indent=2)### just try it to avoid vim to crush
+    
+    return rabbisher
+
+#ai: this can be modify
+#yes it is still modifiable
+#just to trigger potential lambda bug!
+#see: but this can not
+#no you may not
+#end
+#end
 
 if __name__ == "__main__":
     print(json.dumps(handler(to="1/0", content="This is a test email.\nIt has multiple lines.", marker="X"),indent=2))
