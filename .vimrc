@@ -120,6 +120,7 @@ set nu
 :map ¢ :source test.vim<CR>
 
 :map ¡ :execute 'e ' . local_path . '/../readme.md'<CR>
+:map ™ :execute 'e ' . local_path . '/readme.md'<CR>
 :map ÷ :execute '!rm ' . local_path . '/main.aux'<CR>:execute '!rm ' . local_path . '/main.toc'<CR>:execute '!rm ' . local_path . '/main.bbl'<CR>
 
 :map … /\\a\(\\\\|{\)<CR>
