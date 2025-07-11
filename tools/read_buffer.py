@@ -168,7 +168,7 @@ def handler(**args):
         "annotated_context": fala.to_dict(), 
         "marker":marker, 
         #"scanned_context":lines[badcursor+1:goodcursor],
-        "hint":"Each modifyiable block contains  'block_path:' to label the block, use  'content: your replaced content' to modify it. Use strings to modify, not list of rows."}
+        "hint":"Each modifyiable block contains  'block_path:' to label the block, to modify , put the block_path to 'to' parameter and  use  'content: your replaced content' to modify it. Use strings to modify, not list of rows."}
 
 if __name__ == "__main__":
     result = handler() 
