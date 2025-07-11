@@ -1,4 +1,5 @@
-let s:socket_path = 'unix:'. expand('<sfile>:p:h') . '/vimsocket'
+"let s:socket_path = 'unix:'. expand('<sfile>:p:h') . '/vimsocket'
+let s:socket_path = 'localhost:8765'
 let s:tools_path = expand('<sfile>:p:h') . '/tools'
 
 "let s:socket_path = 'vimsocket'
