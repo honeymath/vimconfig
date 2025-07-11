@@ -108,7 +108,7 @@ class VimSocketServer:
 #        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 #        self.sock.bind(self.socket_path)
-        self.sock.bind(('127.0.0.1', 8765))
+        self.sock.bind(('0.0.0.0', 8765))
         self.sock.listen()
         print(f"Second server listening at {self.socket_path}")
 
