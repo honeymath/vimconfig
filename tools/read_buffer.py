@@ -13,6 +13,9 @@ def set_chars():
     if filetype == "python":
         escape_char = "##"
         comment_char = "#"
+    elif filetype == "vim":
+        escape_char = '""'
+        comment_char = '"'
     elif filetype == "plaintex":
         escape_char = "%%"
         comment_char = "%"
