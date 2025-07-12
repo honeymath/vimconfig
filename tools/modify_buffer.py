@@ -128,10 +128,29 @@ def generate_emails_by_keys(modified_keys):
 
 
 
+#wrapper function
+def handler(**args):
+    blockpath = args.get("to",None)
+    content = args.get("content",None)
+    
+    if blockpath is None:
+        return "blockpath is required"
+    elif content is None:
+        return "content need to specified"
+    
+    marker = blockpath[0]
+    to = blockpath[1:]
 
+    markpos = get_position_by_marker(marker)
+    if markpos < 0:
+        return f"path invalid; the marker {marker} does not exists"
+    return fhandler(to=to,marker=marker,content=content)
+
+#end
+    
          
 
-def handler(**args):
+def fhandler(**args):
     global cursor ## this is used to follow the processing process
     level = 1
     lines = get_current_buffer()

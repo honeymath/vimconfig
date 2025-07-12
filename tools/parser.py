@@ -36,7 +36,7 @@ class Node:
         for child in self.children:
             child.reverse()
 #see: try try try miao
-    def to_dict(self):
+    def to_dict(self, prefix='', callback=None):
         output_dic = {}
         ignore_meta = ['scale','end','path','regex']
         for k, v in self.metadata.items():
@@ -61,7 +61,9 @@ class Node:
                     if i == float('inf') or i == -float('inf'):
                         inf_counter += 1
                 path_entry[0:inf_counter] = [inf_counter]
-                output_dic['block_path'] = ( '/'.join([str(x) for x in path_entry]))
+                output_dic['block_path'] = prefix+( '/'.join([str(x) for x in path_entry]))
+                if callable(callback):
+                    callback(output_dic['block_path'])
         if self.type:
             output_dic['type']= self.type
         output_dic['parent'] = self.parent.type if self.parent else "NONE"
@@ -69,11 +71,11 @@ class Node:
         if self.content:
             output_dic['content'] = '\n'.join(self.content)
         if self.children:
-            output_dic['children'] = [child.to_dict() for child in self.children]
+            output_dic['children'] = [child.to_dict(prefix=prefix,callback=callback) for child in self.children]
         return output_dic
 #end
-    def to_json(self, indent=2):
-        return json.dumps(self.to_dict(), indent=indent)
+    def to_json(self, indent=2, prefix = "", callback = None):
+        return json.dumps(self.to_dict(prefix=prefix,callback=callback), indent=indent )
     
     def add_metadata(self, metadata):
         if not isinstance(self.metadata, defaultdict):
