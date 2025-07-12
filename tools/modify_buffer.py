@@ -338,6 +338,8 @@ def handler(**args):
         rabbisher["warning"].append(f"Some emails were not processed, it might because the system can not locate the element by the provided block path.")
     if refused_keys:
         rabbisher["warning"].append(f"Emails were refused. Block element were found but modification is not allowed. Please check the properties of the block element.")
+    if rabbisher.warning:
+        rabbisher["success"] = False
     
     hobaxiubanimama = json.dumps(rabbisher, indent=2)### just try it to avoid vim to crush
     
