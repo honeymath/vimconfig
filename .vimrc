@@ -4,10 +4,13 @@ set nocompatible              " be iMproved, required
 filetype off                  " required
 syntax on
 
-if isdirectory('~/repositories/syncpdf-remote')
+if isdirectory(expand('~/repositories/syncpdf-remote'))
 	source ~/repositories/syncpdf-remote/synccurl.vim
 	source ~/repositories/syncpdf-remote/worker.vim
+else
+  echo "找不到目录：~/repositories/syncpdf-remote"
 endif
+
 source ~/repositories/vimconfig/channel.vim
 
 "call plug#begin('~/.vim/plugged')
