@@ -6,7 +6,6 @@ syntax on
 
 if isdirectory(expand('~/repositories/syncpdf-remote'))
 	source ~/repositories/syncpdf-remote/synccurl.vim
-	source ~/repositories/syncpdf-remote/worker.vim
 else
   echo "找不到目录：~/repositories/syncpdf-remote"
 endif
