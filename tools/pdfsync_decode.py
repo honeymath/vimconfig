@@ -18,6 +18,8 @@ def handler(**data):
         if tex_file and line_num:
             import vim
             vim.command(f':e +{line_num} {tex_file}')
+#ai: I also want to set this 
+            vim.vars['exec'] = f'e +{line_num} {tex_file}'
             return {"execute": f':e +{line_num} {tex_file}'}
         else:
             return {"error": f"无法解析 Synctex 输出: texfile or line_num is missing, tex_file={tex_file}, line_num={line_num}, data={data}"}

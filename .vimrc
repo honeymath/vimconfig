@@ -106,6 +106,7 @@ set nu
 
 :map « :call SmartCtrlO()<CR>
 
+nnoremap œ :execute g:exec<CR>
 
 :map <D-Bslash> /src=\\|href=\\|<r><CR>
 
