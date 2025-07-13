@@ -23,6 +23,9 @@ def set_chars():
     elif filetype == "markdown":
         escape_char = ">>"
         comment_char = ">"
+    elif filetype == "javascript":
+        escape_char = "////"
+        comment_char = "//"
     else:
         escape_char = "##"
         comment_char = "#"
