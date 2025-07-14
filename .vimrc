@@ -46,7 +46,8 @@ function! EnterPath()
     echo "No matching path found"
     return
   endif
-  let l:dir = fnamemodify(l:path, ':h')
+  let l:didi = fnamemodify(l:path, ':h')
+  let l:dir = fnamemodify(expand('<sfile>:p:h') . '/' . l:didi, ':p')
   if !isdirectory(l:dir)
     call mkdir(l:dir, 'p')
     echo "Created: " . l:dir
