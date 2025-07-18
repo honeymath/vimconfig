@@ -47,12 +47,15 @@ function! EnterPath()
     return
   endif
   let l:didi = fnamemodify(l:path, ':h')
-  let l:dir = fnamemodify(expand('<sfile>:p:h') . '/' . l:didi, ':p')
-  if !isdirectory(l:dir)
+  let l:dir = resolve(fnamemodify(expand('%:p:h') . '/' . l:didi, ':p'))
+"  echom "Directory: " . l:dir
+
+"  let l:dir = fnamemodify(expand('<sfile>:p:h') . '/' . l:didi, ':p')
+  if !isdirectory(expand(l:dir))
     call mkdir(l:dir, 'p')
     echo "Created: " . l:dir
   else
-    echo "Directory already exists"
+"    echom "Directory already exists". l:dir
   endif
   execute 'edit' fnameescape(expand('%:p:h') . '/' .l:path)
 endfunction
