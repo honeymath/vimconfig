@@ -19,6 +19,9 @@ def set_chars():
     elif filetype == "plaintex":
         escape_char = "%%"
         comment_char = "%"
+    elif filetype == "tex":
+        escape_char = "%%"
+        comment_char = "%"
     elif filetype == "markdown":
         escape_char = ">>"
         comment_char = ">"
