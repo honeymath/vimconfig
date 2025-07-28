@@ -2,6 +2,7 @@ from parser import Parser, get_element_near_cursor
 import json
 from collections import defaultdict
 import vim
+import os
 
 escape_char = "%%"
 comment_char = "%"
@@ -173,7 +174,12 @@ def handler(**args):
             print(f"Error updating history at level {i}: {e}")
             break
         fala = history[i]
+    ## added on July 28,2025, to include the relative path relative to llmos
+    base = '/Users/qiruili/repositories/llmos'
+    cwd = vim.eval('expand("%:p:h")')
+    relative_path = os.path.relpath(cwd, base)
     return {"current_cursor": current_element.to_dict(prefix=marker), 
+        "file_path": relative_path,
         "annotated_context": fala.to_dict(prefix=marker), 
         "marker":marker, 
         #"scanned_context":lines[badcursor+1:goodcursor],
