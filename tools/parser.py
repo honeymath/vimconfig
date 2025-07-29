@@ -2,6 +2,8 @@ import re
 from collections import defaultdict
 import json
 # 🌟 Node 数据结构
+MODIFIABLE_KEYS = {'ai','python'}
+UNMODIFIABLE_KEYS = {'see','watch','note'} 
 class Node:
     def __init__(self, type="", content=[], metadata={},index=0, parent = None):
         ## so adding index will take care when stack poping out.
@@ -16,9 +18,11 @@ class Node:
             self.add_metadata(metadata)
 
     def modifiable(self):
-        if self.metadata['ai']:
+#        if self.metadata['ai']:
+        if set(self.metadata.keys()).intersection(MODIFIABLE_KEYS):
             return True
-        if self.metadata['see'] or self.metadata['watch']:
+#        if self.metadata['see'] or self.metadata['watch']:
+        if set(self.metadata.keys()).intersection(UNMODIFIABLE_KEYS):
             return False
         if not self.parent:
             return False
@@ -35,7 +39,6 @@ class Node:
             self.metadata[key].reverse()
         for child in self.children:
             child.reverse()
-#see: try try try miao
     def to_dict(self, prefix='', callback=None):
         output_dic = {}
         ignore_meta = ['scale','end','path','regex']
@@ -73,7 +76,6 @@ class Node:
         if self.children:
             output_dic['children'] = [child.to_dict(prefix=prefix,callback=callback) for child in self.children]
         return output_dic
-#end
     def to_json(self, indent=2, prefix = "", callback = None):
         return json.dumps(self.to_dict(prefix=prefix,callback=callback), indent=indent )
     
@@ -283,12 +285,17 @@ class DefaultStack:
 class Parser:
     def __init__(self, mode='normal', callback_function=None):
         self.comment_char = '```'
+        self.comment_tail_char = '' # the comment tail char is used when of the form <!--xxx-->
+        self.comment_char_pairs = [] # a future design, can put multiple comment chars
         self.escape_char = '>'
         self.META = ['name', 'date']
+        self.SELF_NESTABLE_KEYS = ['watch','note']# define the self nestable keys
+        self.SELF_ISOLATED_KEYS = ['python'] # the isolated keys refuses cousins of the same type.
         self.patterns = {
             'ai': 'ai:(.*?)$',
             'see': 'see:(.*?)$',
             'watch': 'watch:(.*?)$',
+            'note': 'note:(.*?)$',
             'name': 'name:(.*?)$',
             'date': 'date:(.*?)$',
             'end': 'end()$',
@@ -299,17 +306,20 @@ class Parser:
         self.mode = mode  # 'normal' or 'reverse'
 
 
-    def set_syntax_chars(self, comment_char=None, escape_char=None):
+    def set_syntax_chars(self, comment_char=None, escape_char=None, comment_char_pairs = None):
         if comment_char is not None:
             self.comment_char = comment_char
         if escape_char is not None:
             self.escape_char = escape_char
+        if comment_char_pairs is not None:
+            self.comment_char_pairs = comment_char_pairs
         self.compile_patterns()
 
     def compile_patterns(self):
         self.ESCAPE_PATTERN = re.compile(rf'^{self.escape_char}.*$')
-        self.BLOCK_PATTERNS = {k: re.compile(rf'^{self.comment_char}{v}') for k, v in self.patterns.items()}
-        self.ONELINE_PATTERNS = {k: re.compile(rf'^(.*?){self.comment_char}{v}') for k, v in self.patterns.items() if k not in self.META}
+        if not self.comment_char_pairs:
+            self.BLOCK_PATTERNS = {k: re.compile(rf'^{self.comment_char}{v}') for k, v in self.patterns.items()}
+            self.ONELINE_PATTERNS = {k: re.compile(rf'^(.*?){self.comment_char}{v}') for k, v in self.patterns.items() if k not in self.META}
 
     def handle_block_match(self, type, metadata, line):
         if type in self.META:
@@ -321,8 +331,8 @@ class Parser:
             self.state = self.stack[-1].type ## state reverse.
 #            print(f"End detected! Stack poped, current length {self.stack.len()}, Status transferd to:{self.state}") 
             self.stack[-1].new_context_child(metadata={type: metadata})
-        elif self.state == 'watch':
-            self.stack.append(self.stack[-1].new_non_context_child(type='watch'))
+        elif self.state in self.SELF_NESTABLE_KEYS: #== 'watch':
+            self.stack.append(self.stack[-1].new_non_context_child(type=self.state))
             self.stack[-1].new_context_child() ### added for fogic
             self.stack[-1].children[-1].add_metadata({type: metadata})
         elif self.state == old_state:
@@ -342,7 +352,7 @@ class Parser:
             self.stack.append(self.stack[-1].new_non_context_child(type='end', metadata={}))
             self.stack[-1].new_context_child() ### added for fogic
             return
-        elif self.state == 'watch':
+        elif self.state in self.SELF_NESTABLE_KEYS:# == 'watch':
             self.stack[-1].type = self.state
             self.stack[-1].children[-1].add_metadata({type: metadata})
             self.stack.pop()
@@ -432,6 +442,12 @@ if __name__ == '__main__':
                     "#see:second see block",
                         "Content line 2 #ai: mark inline", 
                         "Content 3",
+                        "#watch: watch block",
+                        "Content of watch",
+                            "#watch: watch inside watch",
+                            "Inside watch block",
+                            "#end",
+                        "#end",
                     "#see:chanlenge",
                         "Another see block",
                     "#end",
@@ -535,17 +551,15 @@ if __name__ == '__main__':
 
 ### the following function combines the history and future to print out the entire tree, can be used for the output.
 
-"""
-fala = None
-for i in range(3):
-    history[i].reverse()
-    if fala:
-        history[i].giveback_child(fala)
-        history[i].new_context_child(metadata={})
-    history[i].update(future[i])
-    fala = history[i]
-print(f"Final Result:{history[2].to_json(indent=2)}")
-"""
+    fala = None
+    for i in range(3):
+        history[i].reverse()
+        if fala:
+            history[i].giveback_child(fala)
+            history[i].new_context_child(metadata={})
+        history[i].update(future[i])
+        fala = history[i]
+    print(f"Final Result:{history[2].to_json(indent=2)}")
 
 
 
