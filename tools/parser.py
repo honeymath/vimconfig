@@ -17,29 +17,65 @@ class Node:
         if metadata:
             self.add_metadata(metadata)
     def brothers(self):
+#        print("The element you care is")
+#        print("--"*50)
+#        print(self.to_json(indent=2))
         if not self.parent:
             return [self], 0
+#        print("The fucking parent is")
+#        print("--"*50)
+#        print(self.parent.to_json(indent=2))
         brothers = self.parent.children
+#        print("--"*50)
+#        print("--"*50)
+#        print(f"Brothers: {brothers.to_json(indent=2)}")
+#        print(f"Brothers: {[x.type for x in brothers]}")
         self_index = brothers.index(self)
         return brothers, self_index
 
-    def ancestry(self, ignore_brother = ['note','context'], collect = ['kcuf'], representative = True):
-        if self.type in collect:
-            return self.children[0].content
-        if not self.representative and self.type in ignore_brother:
+    def ancestry(self, ignore_brother = ['note','context'], accepted_type = ['kcuf'], accepted_meta = ['python'], representative = True):
+        if self.type in accepted_type:
+#            print(f"     {self.type} acc")
+            for kid in self.children:
+                if self.type in set(kid.metadata.keys()) and kid.metadata[self.type][-1] in accepted_meta:
+#                    print(f"     {self.type} finds in keys")
+                    return self.children[0].content
+                else:
+#                    print(f"     {self.type} does not find in keys")
+#                    print(f"     the keys:{set(kid.metadata.keys())}")
+#                    print(f"     {self.type} in {set(kid.metadata.keys())} value is {self.type in set(kid.metadata.keys())}")
+#                    print(f"     the vlues:{kid.metadata[self.type]}")
+#                    print(f"     {kid.metadata[self.type][-1]} in {accepted_meta} value is {kid.metadata[self.type] in accepted_meta}")
+                    return [] # if the metadata does not match.
+#        else:
+#            print(f"     {self.type} not acc")
+        if not representative and self.type in ignore_brother:
+#            print(f"     rep {self.type} ign")
             return []
+#        print(f"     rep {self.type} processing...")
         collected_ancestry = []
-        if self.representative:
+        if representative:
+#            print("Representative is runned")
             if self.parent: 
-                collected_ancestry += self.parent.ancestry(ignore_brother = ignore_brother, collect = collect, representative = True)
+#                print("Now call parent ancestry")
+                collected_ancestry += self.parent.ancestry(ignore_brother = ignore_brother, accepted_type = accepted_type, accepted_meta = accepted_meta, representative = True)
 
             brothers, index = self.brothers()
             older_brothers = brothers[:index]
+            helper = [x.type for x in older_brothers]
+#            print(f"Fund older brothers{helper}, my position is at {index} in the brothers list.")
             for bro in older_brothers:
-                collected_ancestry += bro.ancestry(ignore_brother=ignore_brother, collect = collect, representative = False) 
+#                print("Find brothers, now do brothers")
+                collected_ancestry += bro.ancestry(ignore_brother=ignore_brother, accepted_type = accepted_type,  accepted_meta = accepted_meta, representative = False) 
         else:
+#            print("Non-representative is runned type is", self.type)
+#            if "start_cursor" in self.metadata.keys():
+#                print(f"Start cursor is {self.metadata['start_cursor'][-1]}")
+#            if "end_cursor" in self.metadata.keys():
+#                print(f"End cursor is {self.metadata['end_cursor'][-1]}")
             for kid in self.children:
-                collected_ancestry += kid.ancestry(ignore_brother=ignore_brother, collect = collect, representative = False)
+                collected_ancestry += kid.ancestry(ignore_brother=ignore_brother, accepted_type = accepted_type, accepted_meta = accepted_meta,  representative = False)
+        print(f"Running finished, now return {collected_ancestry}") 
         return collected_ancestry
 
     def modifiable(self):
@@ -469,6 +505,7 @@ class Parser:
 
 
 def get_element_near_cursor(history,future):
+    """
     if not future[0]:
         print(f"This element has not future elements.")
         return Node()
@@ -476,14 +513,16 @@ def get_element_near_cursor(history,future):
         print(f"You have no children!")
         return Node()
     elif future[0].children[0].type == "context" or future[0].children[0].type == "oneline":
+        # Aug 3th: I don't know why return the future element, 
         rinima = future[0].children[0].content
-#        print(f"Rinima is {rinima}")
-#        print(f"Future[0]{future[0].to_json(indent=2)}")
         if rinima:
             return future[0].children[0]
         else:
             return future[0].children[1] if len(future[0].children) > 1 else future[0].children[0]
-#    print(future[0].children[0].to_json(indent=2))
+    """
+        # Now I will return the history, let me say the history must have fucking children
+    return history[0].children[0]
+        
 
 
 
@@ -585,6 +624,50 @@ if __name__ == '__main__':
 #        "<!--end-->",
     ]
     cursor = 16
+## Now let us design the testing data
+    test_cases = [
+        "<!--watch: supposed to be processed, grand older brother-->",
+        "```python",
+            "1",
+        "```",
+        "<!--end-->",
+        "<!--note:non-representative ancestor siblings, grand older brother-->",
+            "This part is ancestor siblisngs suppoedd to be ignore as well",
+            "```python",
+                "x",
+            "```",
+        "<!--end-->",
+        "<!--note:representative ancestors, direct grand parent-->",
+            "```python",
+                "2",
+            "```",
+            "<!--note:non-representative siblings, older uncle-->",
+                "This part is suppoedd to be ignore",
+                "```python",
+                    "x",
+                "```",
+            "<!--end-->",
+            "```python",
+                "3",
+            "```",
+            "<!--note:representative siblinsgs, direct parent-->",
+                "```python",
+                    "4",
+                "```",
+                "Cursor position",
+                "```python",
+                    "x",
+                "```",
+            "<!--end-->",
+            "<!--note:the smaller brothers, should ignore -->",
+                "This part should be non-provessed",
+                "```python",
+                    "x",
+                "```",
+            "<!--end-->",
+        "<!--end-->",
+    ]
+    cursor = 28
     test_casesa = [
         "<!--note:NO0-->",
         "<!--cao:nimabi-->",
@@ -742,6 +825,7 @@ if __name__ == '__main__':
     else:
         print(f"Cursor at {current_element.to_json(indent=2)}")
 
+
 ### the following function combines the history and future to print out the entire tree, can be used for the output.
 
     fala = None
@@ -754,6 +838,15 @@ if __name__ == '__main__':
             history[i].update(future[i])
         fala = history[i]
     print(f"Final Result:{history[-1].to_json(indent=2)}")
+    
+    print(f"Get the current elemenert brothers")
+    bronima, inda = current_element.brothers()
+    print(f"Brothers: {[x.type for x in bronima]}, index: {inda}")
+    print("-" * 40)
+    print("Ancestry is ")
+    print("-" * 40)
+    ance = current_element.ancestry(ignore_brother=['note','context'], accepted_type=['kcuf'], accepted_meta=['python'], representative=True)
+    print(f"Ancestry: {json.dumps(ance, indent=2)}")
 
 
 
