@@ -16,6 +16,31 @@ class Node:
         self.parent = parent 
         if metadata:
             self.add_metadata(metadata)
+    def brothers(self):
+        if not self.parent:
+            return [self], 0
+        brothers = self.parent.children
+        self_index = brothers.index(self)
+        return brothers, self_index
+
+    def ancestry(self, ignore_brother = ['note','context'], collect = ['kcuf'], representative = True):
+        if self.type in collect:
+            return self.children[0].content
+        if not self.representative and self.type in ignore_brother:
+            return []
+        collected_ancestry = []
+        if self.representative:
+            if self.parent: 
+                collected_ancestry += self.parent.ancestry(ignore_brother = ignore_brother, collect = collect, representative = True)
+
+            brothers, index = self.brothers()
+            older_brothers = brothers[:index]
+            for bro in older_brothers:
+                collected_ancestry += bro.ancestry(ignore_brother=ignore_brother, collect = collect, representative = False) 
+        else:
+            for kid in self.children:
+                collected_ancestry += kid.ancestry(ignore_brother=ignore_brother, collect = collect, representative = False)
+        return collected_ancestry
 
     def modifiable(self):
 #        if self.metadata['ai']:
