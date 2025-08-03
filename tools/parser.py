@@ -2,7 +2,7 @@ import re
 from collections import defaultdict
 import json
 # 🌟 Node 数据结构
-MODIFIABLE_KEYS = {'ai','python','kcuf','note'}
+MODIFIABLE_KEYS = {'ai','python','kcuf','note','cao'}
 UNMODIFIABLE_KEYS = {'see','watch'} 
 class Node:
     def __init__(self, type="", content=[], metadata={},index=0, parent = None):
@@ -188,7 +188,11 @@ class Node:
             c.parent = self
         self.children.extend(children)
 
+    def have_children(self):
+        return bool(self.children)
+
     def update(self, node):
+        self.extend_metadata(node)## add on Aug 3 , 2025 to fuck it
         self.eat_child(node.children[0])
         node.children = node.children[1:]  
         while node.children and node.children[0].type != self.type:
@@ -289,8 +293,8 @@ class Parser:
         self.comment_char_pairs = [] # a future design, can put multiple comment chars
         self.escape_char = '>'
         self.META = ['name', 'date']
-        self.SELF_NESTABLE_KEYS = ['watch','note']# define the self nestable keys
-        self.END_KEYS = ['end','fuck'] # the end keys are used to end the current context, and pop the stack.
+        self.SELF_NESTABLE_KEYS = ['watch','note','cao','kcuf']# define the self nestable keys
+        self.END_KEYS = ['end','fuck','oac'] # the end keys are used to end the current context, and pop the stack.
         self.SELF_ISOLATED_KEYS = ['python'] # the isolated keys refuses cousins of the same type.
         self.snippet_char = '```' ###
         self.patterns = {
@@ -298,6 +302,8 @@ class Parser:
             'see': 'see:(.*?)',
             'watch': 'watch:(.*?)',
             'note': 'note:(.*?)',
+            'cao': 'cao:(.*?)',
+            'oac': 'oac()',
             'name': 'name:(.*?)',
             'date': 'date:(.*?)',
             'end': 'end()',
@@ -332,18 +338,22 @@ class Parser:
             self.BLOCK_PATTERNS["fuck"] = re.compile(rf'^{self.snippet_char}()$')
 #        print(self.BLOCK_PATTERNS)
 
-    def handle_block_match(self, type, metadata, line):
+    def handle_block_match(self, type, metadata, line, cursor = None): ## add cursor option for tracking
         if type in self.META:
             self.stack[-1].children[-1].add_metadata({type: metadata})
             return
         old_state, self.state = self.state, type
         if self.state in self.END_KEYS: #== 'end':
-            self.stack.pop()
+            poop = self.stack.pop()
+            if cursor is not None:
+                poop.add_metadata({'end_cursor': cursor})
+            print(f"End detected! Stack poped, endcorsor is {cursor},poop is {poop.to_json(indent=2)}")
             self.state = self.stack[-1].type ## state reverse.
 #            print(f"End detected! Stack poped, current length {self.stack.len()}, Status transferd to:{self.state}") 
             self.stack[-1].new_context_child(metadata={type: metadata})
         elif self.state in self.SELF_NESTABLE_KEYS: #== 'watch':
             self.stack.append(self.stack[-1].new_non_context_child(type=self.state))
+            self.stack[-1].add_metadata({'start_cursor': cursor})
             self.stack[-1].new_context_child() ### added for fogic
             self.stack[-1].children[-1].add_metadata({type: metadata})
         elif self.state == old_state:
@@ -352,8 +362,10 @@ class Parser:
             self.stack.append(self.stack[-1].new_non_context_child(type=self.state))
             self.stack[-1].new_context_child() ### added for fogic
             self.stack[-1].children[-1].add_metadata({type: metadata})
+            if cursor is not None:
+                self.stack[-1].add_metadata({'start_cursor': cursor})
 
-    def reverse_handle_block_match(self, type, metadata, line):
+    def reverse_handle_block_match(self, type, metadata, line, cursor = None): ## add cursor option for tracking
         if type in self.META:
             self.stack[-1].children[-1].add_metadata({type: metadata})
             return
@@ -362,11 +374,15 @@ class Parser:
         if self.state in self.END_KEYS:# == 'end': ## it has ignore the previous 
             self.stack.append(self.stack[-1].new_non_context_child(type=self.state, metadata={}))
             self.stack[-1].new_context_child() ### added for fogic
+            if cursor is not None:
+                self.stack[-1].add_metadata({'end_cursor': cursor})
             return
         elif self.state in self.SELF_NESTABLE_KEYS:# == 'watch':
             self.stack[-1].type = self.state
             self.stack[-1].children[-1].add_metadata({type: metadata})
-            self.stack.pop()
+            poop = self.stack.pop()
+            if cursor is not None:
+                poop.add_metadata({'start_cursor': cursor})
             self.stack[-1].new_context_child(metadata={})## everytime pop, create a context, without metadata.
             self.state = self.stack[-1].type  # remembers the state
             return
@@ -408,10 +424,10 @@ class Parser:
 
         return "CONTENT", "", {}, line
 
-    def parse(self, line):
+    def parse(self, line, cursor = None): ## add cursor option for tracking positions
         TYPE, type_, metadata, restline = self.match(line)
-        #print(f"Parsing line: {line}")
-        #print(f"TYPE: {TYPE}, type_: {type_}, metadata: {metadata}, restline: {restline}")
+        print(f"Parsing line: {line}")
+        print(f"TYPE: {TYPE}, type_: {type_}, metadata: {metadata}, restline: {restline}")
         if TYPE == "CONTENT":
             if self.stack[-1].children:
                 self.stack[-1].children[-1].append_content(line)
@@ -419,9 +435,9 @@ class Parser:
                 raise Exception("Unexpected, the last element does not have content children")
         elif TYPE == "BLOCK":
             if self.mode == 'reverse':
-                self.reverse_handle_block_match(type_, metadata[type_], line)
+                self.reverse_handle_block_match(type_, metadata[type_], line, cursor=cursor)
             else:
-                self.handle_block_match(type_, metadata[type_], line)
+                self.handle_block_match(type_, metadata[type_], line, cursor=cursor)
         elif TYPE == "ONELINE":
             self.stack[-1].add_inline_children(type=type_, line=restline, prompt=metadata["prompt"], regex = metadata["regex"])
         return TYPE, type_, metadata, restline
@@ -467,7 +483,7 @@ if __name__ == '__main__':
                             "Inside watch block",
                             "<!--end-->",
                         "<!--end-->",
-                    "<!--see:chanlenge",
+                    "<!--see:chanlenge-->",
                         "Another see block",
                     "<!--end-->",
                     "Content4",
@@ -487,7 +503,128 @@ if __name__ == '__main__':
             "Content6",
         "<!--end-->",
         ]
-    cursor = 5
+
+
+    test_cases = [
+        "<!--ai: can you see me-->",
+        "<!--ai:  second block-->",
+        "koooo",
+        "<!--note:-->",
+        "```python",
+        "def hello_world():",
+        '    print("Hello, world!")',
+        "```",
+        "",
+        "<!--note:-->",
+        "```python",
+        "def another_function():",
+        '    return "This is another function"',
+        "```",
+        "<!--end-->",
+        "<!--end-->",
+        "",
+        "<!--see:another-->",
+        "This is a noter test",
+        "<!--end-->",
+        "<!--end-->",
+    ]
+    test_cases = [
+        "<!--note:NO0-->",
+        "```python",
+        "print('ffffff')",
+        "print('ffffff')",
+        "```",
+        "<!--note:ignorefuck-->",
+        "```python",
+        "print('iiiiiii')",
+        "```",
+        "<!--end-->",
+        "<!--note:NO1-->",
+        "```python",
+        "print('eeee')",
+        "```",
+        "rinima",
+        "<!--note:NO2-->",
+        "nimabibi",
+        "caonimabi",
+        "```python",
+        "print('uuuuuuuu')",
+        "```",
+        "<!--end-->",
+        "```python",
+        "print('pppppppp')",
+        "```",
+        "<!--end-->",
+        "<!--end-->",
+#        "<!--end-->",
+#        "<!--end-->",
+    ]
+    cursor = 16
+    test_casesa = [
+        "<!--note:NO0-->",
+        "<!--cao:nimabi-->",
+        "print('ffffff')",
+        "print('ffffff')",
+        "<!--oac-->",
+        "<!--cao:nimabi-->",
+        "print('iiiiiii')",
+        "<!--oac-->",
+        "<!--note:NO1-->",
+        "<!--cao:nimabi-->",
+        "print('eeee')",
+        "<!--oac-->",
+        "rinima",
+        "<!--note:NO2-->",
+        "caonimabi",
+        "<!--cao:nimabi-->",
+        "print('uuuuuuuu')",
+        "<!--oac-->",
+        "nimashishabi",
+        "<!--end-->",
+        "<!--end-->",
+        "<!--end-->",
+    ]
+    test_casesa = [
+        "<!--watch:NO0-->",
+        "<!--cao:nimabi-->",
+        "print('ffffff')",
+        "print('ffffff')",
+        "<!--oac-->",
+        "<!--cao:nimabi-->",
+        "print('iiiiiii')",
+        "<!--oac-->",
+        "<!--watch:NO1-->",
+        "<!--cao:nimabi-->",
+        "print('eeee')",
+        "<!--oac-->",
+        "rinima",
+        "<!--watch:NO2-->",
+        "caonimabi",
+        "<!--cao:nimabi-->",
+        "print('uuuuuuuu')",
+        "<!--oac-->",
+        "nimashishabi",
+        "<!--end-->",
+        "<!--end-->",
+        "<!--end-->",
+    ]
+    cursora = 18
+    test_casesi = [
+        "<!--watch:caonima-1-->",
+        "<!--watch:caonima0-->",
+        "Kuangcaonimabi",
+        "<!--watch:caonima1-->",
+        "Caonimacaonima",
+        "<!--watch:caonima2-->",
+        "nitamadeshishabi",
+        "<!--end-->",
+        "shabishabishabi",
+        "<!--end-->",
+        "<!--end-->",
+        "<!--end-->",
+    ]
+    cursori = 8
+#   cursor = 7
 #    cursor = 0
 
 
@@ -499,10 +636,11 @@ if __name__ == '__main__':
     resrap.set_syntax_chars(comment_char='<!--', comment_tail_char='-->' ,escape_char='>>', snippet_char = '```')
     resrap.stack[-1].new_context_child(metadata={})  # This is EOF. this is glue structure.
     badcursor = cursor-1
-    while resrap.stack.len() > -2 and badcursor >=0:
+    #while resrap.stack.len() > -3 and badcursor >=0:
+    while badcursor >=0:
         line = test_cases[badcursor]
         
-        resrap.parse(line)
+        resrap.parse(line, cursor=badcursor)
 #        print(line)
 #        print(resrap.stack.len())
 #        print(resrap.stack._data)
@@ -531,9 +669,10 @@ if __name__ == '__main__':
     parser.stack[-1].new_context_child(metadata={})  # This is SOF the init line mother !!!!
     print(f"After king parser state is {parser.state}")
 ### We trasmit the state to the future parser
-    while parser.stack.len()>-3 and goodcursor < len(test_cases):
+#    while parser.stack.len()>-3 and goodcursor < len(test_cases):
+    while goodcursor < len(test_cases):
         line = test_cases[goodcursor]
-        TYPE, type_, metadata, restline = parser.parse(line)
+        TYPE, type_, metadata, restline = parser.parse(line, cursor = goodcursor)
         print(f"line:{line}")
         print("    ", [x.type for x in parser.stack._history])
         print(f"    history length: {len(parser.stack._history)}")
@@ -581,14 +720,15 @@ if __name__ == '__main__':
 ### the following function combines the history and future to print out the entire tree, can be used for the output.
 
     fala = None
-    for i in range(2):
+    for i in range(len(history)):
         history[i].reverse()
         if fala:
             history[i].giveback_child(fala)
             history[i].new_context_child(metadata={})
-        history[i].update(future[i])
+        if future[i].have_children(): # this is to fuck
+            history[i].update(future[i])
         fala = history[i]
-    print(f"Final Result:{history[1].to_json(indent=2)}")
+    print(f"Final Result:{history[-1].to_json(indent=2)}")
 
 
 

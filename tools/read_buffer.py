@@ -10,7 +10,7 @@ snippet_char = None
 comment_tail_char = ""
 
 def set_chars():
-    global escape_char, comment_char
+    global escape_char, comment_char, comment_tail_char, snippet_char
     import vim
     filetype = vim.eval("b:current_syntax").strip()
     if filetype == "python":
