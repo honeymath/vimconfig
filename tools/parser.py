@@ -650,6 +650,9 @@ if __name__ == '__main__':
             "```python",
                 "3",
             "```",
+            "```output",
+                "fuck you",
+            "```",
             "<!--note:representative siblinsgs, direct parent-->",
                 "```python",
                     "4",
@@ -667,7 +670,7 @@ if __name__ == '__main__':
             "<!--end-->",
         "<!--end-->",
     ]
-    cursor = 28
+    cursor = 31
     test_casesa = [
         "<!--note:NO0-->",
         "<!--cao:nimabi-->",
