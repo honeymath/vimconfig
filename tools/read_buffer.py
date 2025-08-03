@@ -6,6 +6,8 @@ import os
 
 escape_char = "%%"
 comment_char = "%"
+snippet_char = None
+comment_tail_char = ""
 
 def set_chars():
     global escape_char, comment_char
@@ -24,8 +26,10 @@ def set_chars():
         escape_char = "%%"
         comment_char = "%"
     elif filetype == "markdown":
-        escape_char = ">>"
-        comment_char = ">"
+        comment_char = "<!--"
+        comment_tail_char = "-->"
+        snippet_char = "```"
+        escape_char = ">"
     elif filetype == "javascript":
         escape_char = "////"
         comment_char = "//"
@@ -117,7 +121,7 @@ def handler(**args):
     badcursor=cursor-1
     resrap = Parser(mode='reverse')
     resrap.stack.scale = -1
-    resrap.set_syntax_chars(comment_char=comment_char, escape_char=escape_char)
+    resrap.set_syntax_chars(comment_char=comment_char, escape_char=escape_char, comment_tail_char=comment_tail_char, snippet_char=snippet_char)
     resrap.stack[-1].new_context_child(metadata={}) #initialize
     while resrap.stack.len() > -level and badcursor >= 0:
         resrap.parse(lines[badcursor])
@@ -132,7 +136,7 @@ def handler(**args):
     for index, regret in enumerate(resrap.stack._history):
         parser.stack[-1 - index].type = regret.type
     parser.state = parser.stack[-1].type
-    parser.set_syntax_chars(comment_char=comment_char, escape_char=escape_char)
+    parser.set_syntax_chars(comment_char=comment_char, escape_char=escape_char, comment_tail_char=comment_tail_char, snippet_char=snippet_char)
 
     ## now going forward
     goodcursor = cursor

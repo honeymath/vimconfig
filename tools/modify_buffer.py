@@ -6,6 +6,8 @@ import json
 cursor = -1
 escape_char = "%%"
 comment_char = "%"
+snippet_char = None
+comment_tail_char = ""
 
 def set_chars():
     global escape_char, comment_char
@@ -24,8 +26,10 @@ def set_chars():
         escape_char = "%%"
         comment_char = "%"
     elif filetype == "markdown":
-        escape_char = ">>"
-        comment_char = ">"
+        comment_char = "<!--"
+        comment_tail_char = "-->"
+        snippet_char = "```"
+        escape_char = ">"
     elif filetype == "javascript":
         escape_char = "////"
         comment_char = "//"
@@ -185,7 +189,7 @@ def fhandler(**args):
     
     resrap = Parser(mode='reverse')
     resrap.stack.scale = -1
-    resrap.set_syntax_chars(comment_char=comment_char, escape_char=escape_char)
+    resrap.set_syntax_chars(comment_char=comment_char, escape_char=escape_char, comment_tail_char=comment_tail_char, snippet_char=snippet_char)  
     resrap.stack.emails = negative_emails
 ### Start processing
 
@@ -204,7 +208,7 @@ def fhandler(**args):
     
 ### Start status transfer
     parser = Parser(mode='normal')
-    parser.set_syntax_chars(comment_char=comment_char, escape_char=escape_char)  # set the syntax
+    parser.set_syntax_chars(comment_char=comment_char, escape_char=escape_char, comment_tail_char = comment_tail_char, snippet_char = snippet_char)  # set the syntax
     arealist,nodelist,emails = generate_emails_by_keys(modified_keys) # set emails
     parser.stack.emails = emails
     

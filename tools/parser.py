@@ -2,8 +2,8 @@ import re
 from collections import defaultdict
 import json
 # 🌟 Node 数据结构
-MODIFIABLE_KEYS = {'ai','python'}
-UNMODIFIABLE_KEYS = {'see','watch','note'} 
+MODIFIABLE_KEYS = {'ai','python','kcuf','note'}
+UNMODIFIABLE_KEYS = {'see','watch'} 
 class Node:
     def __init__(self, type="", content=[], metadata={},index=0, parent = None):
         ## so adding index will take care when stack poping out.
@@ -290,15 +290,17 @@ class Parser:
         self.escape_char = '>'
         self.META = ['name', 'date']
         self.SELF_NESTABLE_KEYS = ['watch','note']# define the self nestable keys
+        self.END_KEYS = ['end','fuck'] # the end keys are used to end the current context, and pop the stack.
         self.SELF_ISOLATED_KEYS = ['python'] # the isolated keys refuses cousins of the same type.
+        self.snippet_char = '```' ###
         self.patterns = {
-            'ai': 'ai:(.*?)$',
-            'see': 'see:(.*?)$',
-            'watch': 'watch:(.*?)$',
-            'note': 'note:(.*?)$',
-            'name': 'name:(.*?)$',
-            'date': 'date:(.*?)$',
-            'end': 'end()$',
+            'ai': 'ai:(.*?)',
+            'see': 'see:(.*?)',
+            'watch': 'watch:(.*?)',
+            'note': 'note:(.*?)',
+            'name': 'name:(.*?)',
+            'date': 'date:(.*?)',
+            'end': 'end()',
         }
         self.compile_patterns()
         self.stack = DefaultStack(Node)
@@ -306,27 +308,36 @@ class Parser:
         self.mode = mode  # 'normal' or 'reverse'
 
 
-    def set_syntax_chars(self, comment_char=None, escape_char=None, comment_char_pairs = None):
+    def set_syntax_chars(self, comment_char=None, escape_char=None, comment_tail_char = None, snippet_char = None,comment_char_pairs = None):
         if comment_char is not None:
             self.comment_char = comment_char
+        if comment_tail_char is not None:
+            self.comment_tail_char = comment_tail_char
         if escape_char is not None:
             self.escape_char = escape_char
         if comment_char_pairs is not None:
             self.comment_char_pairs = comment_char_pairs
+        if snippet_char is not None:
+            self.snippet_char = snippet_char
         self.compile_patterns()
 
     def compile_patterns(self):
+        #self.snippet_char 
         self.ESCAPE_PATTERN = re.compile(rf'^{self.escape_char}.*$')
         if not self.comment_char_pairs:
-            self.BLOCK_PATTERNS = {k: re.compile(rf'^{self.comment_char}{v}') for k, v in self.patterns.items()}
-            self.ONELINE_PATTERNS = {k: re.compile(rf'^(.*?){self.comment_char}{v}') for k, v in self.patterns.items() if k not in self.META}
+            self.BLOCK_PATTERNS = {k: re.compile(rf'^{self.comment_char}{v}{self.comment_tail_char}$') for k, v in self.patterns.items()}
+            self.ONELINE_PATTERNS = {k: re.compile(rf'^(.*?){self.comment_char}{v}{self.comment_tail_char}$') for k, v in self.patterns.items() if k not in self.META}
+        if self.snippet_char:
+            self.BLOCK_PATTERNS["kcuf"] = re.compile(rf'^{self.snippet_char}(.+)$')
+            self.BLOCK_PATTERNS["fuck"] = re.compile(rf'^{self.snippet_char}()$')
+#        print(self.BLOCK_PATTERNS)
 
     def handle_block_match(self, type, metadata, line):
         if type in self.META:
             self.stack[-1].children[-1].add_metadata({type: metadata})
             return
         old_state, self.state = self.state, type
-        if self.state == 'end':
+        if self.state in self.END_KEYS: #== 'end':
             self.stack.pop()
             self.state = self.stack[-1].type ## state reverse.
 #            print(f"End detected! Stack poped, current length {self.stack.len()}, Status transferd to:{self.state}") 
@@ -348,8 +359,8 @@ class Parser:
             return
         old_state, self.state = self.state, type
         #from now on, the selfstate is the current type
-        if self.state == 'end': ## it has ignore the previous 
-            self.stack.append(self.stack[-1].new_non_context_child(type='end', metadata={}))
+        if self.state in self.END_KEYS:# == 'end': ## it has ignore the previous 
+            self.stack.append(self.stack[-1].new_non_context_child(type=self.state, metadata={}))
             self.stack[-1].new_context_child() ### added for fogic
             return
         elif self.state in self.SELF_NESTABLE_KEYS:# == 'watch':
@@ -361,7 +372,7 @@ class Parser:
             return
         ##from now on ,the coming state must be ai or see.
         Orphanage = []
-        while old_state!='' and old_state != 'end' and self.state != old_state:
+        while old_state!='' and old_state not in self.END_KEYS and self.state != old_state:
             Orphanage.extend(self.stack[-1].borrow_child())
             self.stack.pop(silent=True)  # Pop the last element without notifying it
             old_state = self.stack[-1].type
@@ -399,6 +410,8 @@ class Parser:
 
     def parse(self, line):
         TYPE, type_, metadata, restline = self.match(line)
+        #print(f"Parsing line: {line}")
+        #print(f"TYPE: {TYPE}, type_: {type_}, metadata: {metadata}, restline: {restline}")
         if TYPE == "CONTENT":
             if self.stack[-1].children:
                 self.stack[-1].children[-1].append_content(line)
@@ -436,29 +449,43 @@ def get_element_near_cursor(history,future):
 if __name__ == '__main__':
     test_cases = [
         "Content 0",
-        "#ai: block start",
-            "#see: see block",
-                "#ai: AI block again",
-                    "#see:second see block",
+        "<!--ai: block start-->",
+            "```python",
+            "print('This is a python code block')",
+            "```",
+            "```python",
+            "print('This is a second python code block')",
+            "```",
+            "<!--see: see block-->",
+                "<!--ai: AI block again-->",
+                    "<!--see:second see block-->",
                         "Content line 2 #ai: mark inline", 
                         "Content 3",
-                        "#watch: watch block",
+                        "<!--watch: watch block-->",
                         "Content of watch",
-                            "#watch: watch inside watch",
+                            "<!--watch: watch inside watch-->",
                             "Inside watch block",
-                            "#end",
-                        "#end",
-                    "#see:chanlenge",
+                            "<!--end-->",
+                        "<!--end-->",
+                    "<!--see:chanlenge",
                         "Another see block",
-                    "#end",
+                    "<!--end-->",
                     "Content4",
-                "#ai:chanlange again",
+                "<!--ai:chanlange again-->",
                     "Again again",
-                "#end",
+                "<!--end-->",
                 "Content5. SUPPOSE LAST ONE",
-            "#end",
+                "```fucker",
+                "fefe",
+                "```",
+                "FUCK",
+                "```python",
+                "print('This is a python code block')",
+                "fuck()",
+                "```",
+            "<!--end-->",
             "Content6",
-        "#end",
+        "<!--end-->",
         ]
     cursor = 5
 #    cursor = 0
@@ -468,7 +495,8 @@ if __name__ == '__main__':
     resrap = Parser(mode='reverse')
     resrap.stack.scale = -1
 #    resrap.stack.emails = {0:{-3:"rinima!!!rinima!!!"},1:{-3:"line one "}}  # This is to test the email system.
-    resrap.set_syntax_chars(comment_char='#', escape_char='##')
+#    resrap.set_syntax_chars(comment_char='#', escape_char='##')
+    resrap.set_syntax_chars(comment_char='<!--', comment_tail_char='-->' ,escape_char='>>', snippet_char = '```')
     resrap.stack[-1].new_context_child(metadata={})  # This is EOF. this is glue structure.
     badcursor = cursor-1
     while resrap.stack.len() > -2 and badcursor >=0:
@@ -496,7 +524,8 @@ if __name__ == '__main__':
         parser.stack[-1-index].type = regret.type
     parser.state = parser.stack[-1].type  # remember the state
 ####### Transmisssion finished. 
-    parser.set_syntax_chars(comment_char='#', escape_char='##')
+#    parser.set_syntax_chars(comment_char='#', escape_char='##', snippet_char='```')
+    parser.set_syntax_chars(comment_char='<!--', comment_tail_char='-->' ,escape_char='>>', snippet_char = '```')
     goodcursor = cursor
     print(f"king parser state is {parser.state}")
     parser.stack[-1].new_context_child(metadata={})  # This is SOF the init line mother !!!!
@@ -552,14 +581,14 @@ if __name__ == '__main__':
 ### the following function combines the history and future to print out the entire tree, can be used for the output.
 
     fala = None
-    for i in range(3):
+    for i in range(2):
         history[i].reverse()
         if fala:
             history[i].giveback_child(fala)
             history[i].new_context_child(metadata={})
         history[i].update(future[i])
         fala = history[i]
-    print(f"Final Result:{history[2].to_json(indent=2)}")
+    print(f"Final Result:{history[1].to_json(indent=2)}")
 
 
 
