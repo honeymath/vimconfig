@@ -647,12 +647,16 @@ if __name__ == '__main__':
                     "x",
                 "```",
             "<!--end-->",
-            "```python",
-                "3",
-            "```",
-            "```output",
-                "fuck you",
-            "```",
+            "<!--watch:deeply nested-->",
+                "<!--watch:deeply nested again-->",
+                    "```python",
+                        "3",
+                    "```",
+                    "```output",
+                        "fuck you",
+                    "```",
+                "<!--end-->",
+            "<!--end-->",
             "<!--note:representative siblinsgs, direct parent-->",
                 "```python",
                     "4",
@@ -670,7 +674,7 @@ if __name__ == '__main__':
             "<!--end-->",
         "<!--end-->",
     ]
-    cursor = 31
+    cursor = 35
     test_casesa = [
         "<!--note:NO0-->",
         "<!--cao:nimabi-->",
