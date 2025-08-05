@@ -10,7 +10,9 @@ else
   echo "找不到目录：~/repositories/syncpdf-remote"
 endif
 
-source ~/repositories/vimconfig/channel.vim
+if filereadable(expand('~/repositories/vimconfig/config.ini'))
+  source ~/repositories/vimconfig/channel.vim
+endif
 
 "call plug#begin('~/.vim/plugged')
 "Plug 'github/copilot.vim'
