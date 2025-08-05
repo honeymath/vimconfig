@@ -31,7 +31,6 @@ endfunction
 
 inoremap <expr> <C-l> SuggestOneWord()
 
-set jumpoptions+=stack
 
 
 autocmd BufEnter ~/repositories/readme.md clearjumps
@@ -445,4 +444,5 @@ autocmd FileType tex iabbrev bb1 𝟙
 autocmd FileType tex iabbrev 𝗯0 𝟘
 autocmd FileType tex iabbrev bb0 𝟘
 
+set jumpoptions+=stack
 :clearjumps
