@@ -4,14 +4,22 @@ set nocompatible              " be iMproved, required
 filetype off                  " required
 syntax on
 
-if isdirectory(expand('~/repositories/syncpdf-remote'))
-	source ~/repositories/syncpdf-remote/synccurl.vim
+let s:vimconfig_path = expand('<sfile>:p:h')
+
+if isdirectory(s:vimconfig_path . '/../syncpdf-remote')
+"if isdirectory(expand('~/repositories/syncpdf-remote'))
+"	source ~/repositories/syncpdf-remote/synccurl.vim
+	execute 'source ' . fnameescape(s:vimconfig_path . '/../syncpdf-remote/synccurl.vim')
 else
-  echo "找不到目录：~/repositories/syncpdf-remote"
+  echo "Can not find the directory: ".s:vimconfig_path . '/../syncpdf-remote'
 endif
 
-if filereadable(expand('~/repositories/vimconfig/config.ini'))
-  source ~/repositories/vimconfig/channel.vim
+if filereadable(s:vimconfig_path . '/../vimconfig/config.ini')
+"if filereadable(expand('~/repositories/vimconfig/config.ini'))
+"  source ~/repositories/vimconfig/channel.vim
+	 execute 'source ' . fnameescape(s:vimconfig_path . '/../vimconfig/channel.vim')
+else
+  echo "Can not fine the config file: ".s:vimconfig_path . '/../vimconfig/config.ini'
 endif
 
 "call plug#begin('~/.vim/plugged')
