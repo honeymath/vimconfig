@@ -31,19 +31,25 @@ for srv in servers:
         print(f"Failed to connect to server {srv['name']}: {e}")
 
 # ===== 初始化本地 TCP 服务（可选） =====
-local_server_sock = None
-if config.getboolean("local_server", "enabled", fallback=False):
-    host = config.get("local_server", "host", fallback="0.0.0.0")
-    port = config.getint("local_server", "port", fallback=7777)
-    max_clients = config.getint("local_server", "max_clients", fallback=5)
-    local_server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    local_server_sock.bind((host, port))
-    local_server_sock.listen(max_clients)
-    print(f"Local TCP server listening on {host}:{port}")
+try:
+    local_server_sock = None
+    if config.getboolean("local_server", "enabled", fallback=False):
+        host = config.get("local_server", "host", fallback="0.0.0.0")
+        port = config.getint("local_server", "port", fallback=7777)
+        max_clients = config.getint("local_server", "max_clients", fallback=5)
+        local_server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        local_server_sock.bind((host, port))
+        local_server_sock.listen(max_clients)
+        print(f"Local TCP server listening on {host}:{port}")
+except Exception as e:
+    print(f"Failed to local TCP {host}:{port} since ", e)
 
 # ===== 初始化 Unix socket =====
 unix_sock_path_base = config.get("unix_socket", "path", fallback="/tmp/vim_channel_")
 unix_sock_path = f"{unix_sock_path_base}{uuid.uuid4().hex}.sock"
+unix_sock_path = f"~/Documents/f.sock"
+unix_sock_path = os.path.expanduser(unix_sock_path)
+print("Trying path at", unix_sock_path)
 if os.path.exists(unix_sock_path):
     os.remove(unix_sock_path)
 
