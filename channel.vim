@@ -73,7 +73,7 @@ func OpenChannel()
 	let channel = ch_open(s:socket_path, {"callback": function('s:OnData')})
 	"let channel = ch_open("localhost:8765", {"callback": "Handle", "mode": "json"})
 	let g:vimsocket_ch = channel
-	echomsg channel
+	echomsg channel." at ".s:socket_path
     return channel
 endfunc
 
