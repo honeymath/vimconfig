@@ -1,4 +1,5 @@
 import configparser
+import json
 import os
 import socket
 
@@ -68,19 +69,19 @@ try:
     tasks = {}  # {task_id: {"sock": sock, "request": 原始数据}}
 
     def send_task(task_id):
-        print("REQUEST_CONTROL") ## pring this to vim worker so it can establish the receiver
+        print("NOTIFY_WORKER_TO_WORK") ## pring this to vim worker so it can establish the receiver
 #end
 
     def listen_unix():
         while True:
             conn, _ = unix_sock.accept()
             with conn:
+#ai: Is 4096 enough? do I have to think about continue receiving data until the end sign? also need to consider unix char?
                 data = conn.recv(4096)
                 if not data:
                     continue
 #ai: Now this part has to be edited, this part is the processed data, and have to send back, have to check based on its id and our record, decide how to send it back
             try:
-                import json
                 msg = json.loads(data.decode())
                 task_id = msg.get("task_id")
                 if task_id and task_id in tasks:
@@ -100,27 +101,20 @@ try:
             rlist, _, _ = select.select(tcp_sockets.values(), [], [], 1)
             for sock in rlist:
                 try:
+#ai: Do I have to receive the data until it fuly loads?
                     data = sock.recv(4096)
+#end
                     if data:
-                        print(f"{data.decode().strip()}")
-#see: I have added this part
-                        tasks[sock] = data
-#ai: but I think I also have to store the uuid?
-                try:
-                    import json
-                    msg = json.loads(data.decode())
-                    task_id = msg.get("task_id")
-                    if task_id:
-                        tasks[task_id] = {"sock": sock, "request": msg}
-                        print(f"[External] Stored task {task_id} from {sock.getpeername()}")
-                    else:
-                        print("[External] Missing task_id in message")
+                        import json
+                        msg = json.loads(data.decode())
+                        task_id = msg.get("task_id")
+                        if task_id:
+                            tasks[task_id] = {"sock": sock, "request": msg}
+                            print(f"[External] Stored task {task_id} from {sock.getpeername()}")
+                        else:
+                            print("[External] Missing task_id in message")
                 except Exception as e:
                     print(f"[External] Failed to parse message: {e}")
-#end
-#end
-                except Exception as e:
-                    print(f"External server error: {e}", file=sys.stderr)
 
     def listen_local_server():
         if not local_server_sock:
