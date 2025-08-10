@@ -83,14 +83,35 @@ def handle_external_message(msg):
 
         if hasattr(module, "handler"):
 #ai:when handle this module.handler, need a wrapper pls, need to know its errout and printout and all infos! Consider includes a wrapper? need stdout, etc, please double check the tools/function_caller.py
-            result = module.handler(**args)
-            return json.dumps({"success": True, "result": result, "task_id": task_id})
-        else:
-            return json.dumps({"success": False, "error": "No handler() in tool", "task_id": task_id})
+            import io
+            import sys
+            import traceback
+            from contextlib import redirect_stdout, redirect_stderr
 
-    except Exception as e:
-        return json.dumps({"success": False, "error": str(e), "task_id": task_id})
+            stdout_buffer = io.StringIO()
+            stderr_buffer = io.StringIO()
 
+            try:
+                with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
+                    result_data = module.handler(**args)
+                result = {
+                    "success": True,
+                    "result": result_data,
+                    "stdout": stdout_buffer.getvalue(),
+                    "stderr": stderr_buffer.getvalue(),
+                    "task_id": task_id,
+                    "error": ""
+                }
+            except Exception:
+                result = {
+                    "success": False,
+                    "result": "",
+                    "stdout": stdout_buffer.getvalue(),
+                    "stderr": stderr_buffer.getvalue(),
+                    "task_id": task_id,
+                    "error": traceback.format_exc()
+                }
+            return json.dumps(result)
 #end
 
 
