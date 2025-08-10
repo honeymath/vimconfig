@@ -1,0 +1,168 @@
+Test 1: > this is an escape line
+  Type: CONTENT
+ Block Type: 
+ Metadata: {}
+ Rest Line: '> this is an escape line'
+  Stack depth: 0
+  Current node type: root
+----------------------------------------
+Test 2: ```ai: generate text
+  Type: BLOCK
+ Block Type: ai
+ Metadata: {'ai': ' generate text'}
+ Rest Line: ''
+  Stack depth: 1
+  Current node type: ai
+----------------------------------------
+Test 3: some text ```see: note
+  Type: ONELINE
+ Block Type: see
+ Metadata: {'prompt': ' note', 'groups': []}
+ Rest Line: 'some text '
+  Stack depth: 1
+  Current node type: ai
+----------------------------------------
+Test 4: plain text with no pattern
+  Type: CONTENT
+ Block Type: 
+ Metadata: {}
+ Rest Line: 'plain text with no pattern'
+  Stack depth: 1
+  Current node type: ai
+----------------------------------------
+Test 5: inline __ marker here
+  Type: CONTENT
+ Block Type: 
+ Metadata: {}
+ Rest Line: 'inline __ marker here'
+  Stack depth: 1
+  Current node type: ai
+----------------------------------------
+Test 6: this is a __ test .
+  Type: CONTENT
+ Block Type: 
+ Metadata: {}
+ Rest Line: 'this is a __ test .'
+  Stack depth: 1
+  Current node type: ai
+----------------------------------------
+Test 7:  ! __ ? 
+  Type: CONTENT
+ Block Type: 
+ Metadata: {}
+ Rest Line: ' ! __ ? '
+  Stack depth: 1
+  Current node type: ai
+----------------------------------------
+Test 8: ? __ !
+  Type: CONTENT
+ Block Type: 
+ Metadata: {}
+ Rest Line: '? __ !'
+  Stack depth: 1
+  Current node type: ai
+----------------------------------------
+Test 9: . __ ;
+  Type: CONTENT
+ Block Type: 
+ Metadata: {}
+ Rest Line: '. __ ;'
+  Stack depth: 1
+  Current node type: ai
+----------------------------------------
+Test 10: ```watch: file change
+  Type: BLOCK
+ Block Type: watch
+ Metadata: {'watch': ' file change'}
+ Rest Line: ''
+  Stack depth: 2
+  Current node type: watch
+----------------------------------------
+Test 11: ```name: mydoc
+  Type: BLOCK
+ Block Type: name
+ Metadata: {'name': ' mydoc'}
+ Rest Line: ''
+  Stack depth: 2
+  Current node type: watch
+----------------------------------------
+Test 12: ```date: 2024-07-05
+  Type: BLOCK
+ Block Type: date
+ Metadata: {'date': ' 2024-07-05'}
+ Rest Line: ''
+  Stack depth: 2
+  Current node type: watch
+----------------------------------------
+Test 13: ```end()
+  Type: CONTENT
+ Block Type: 
+ Metadata: {}
+ Rest Line: '```end()'
+  Stack depth: 2
+  Current node type: watch
+----------------------------------------
+Test 14: ```end
+  Type: BLOCK
+ Block Type: end
+ Metadata: {'end': ''}
+ Rest Line: ''
+  Stack depth: 1
+  Current node type: ai
+----------------------------------------
+Test 15: ```ai: do this
+  Type: BLOCK
+ Block Type: ai
+ Metadata: {'ai': ' do this'}
+ Rest Line: ''
+  Stack depth: 2
+  Current node type: ai
+----------------------------------------
+Test 16: superman I am
+  Type: CONTENT
+ Block Type: 
+ Metadata: {}
+ Rest Line: 'superman I am'
+  Stack depth: 2
+  Current node type: ai
+----------------------------------------
+Test 17: ```ai: do that
+  Type: BLOCK
+ Block Type: ai
+ Metadata: {'ai': ' do that'}
+ Rest Line: ''
+  Stack depth: 2
+  Current node type: ai
+----------------------------------------
+Test 18: another superman I am
+  Type: CONTENT
+ Block Type: 
+ Metadata: {}
+ Rest Line: 'another superman I am'
+  Stack depth: 2
+  Current node type: ai
+----------------------------------------
+Test 19: ```see: this is a note
+  Type: BLOCK
+ Block Type: see
+ Metadata: {'see': ' this is a note'}
+ Rest Line: ''
+  Stack depth: 3
+  Current node type: see
+----------------------------------------
+Test 20: ```end
+  Type: BLOCK
+ Block Type: end
+ Metadata: {'end': ''}
+ Rest Line: ''
+  Stack depth: 2
+  Current node type: ai
+----------------------------------------
+Test 21: ```end
+  Type: BLOCK
+ Block Type: end
+ Metadata: {'end': ''}
+ Rest Line: ''
+  Stack depth: 1
+  Current node type: ai
+----------------------------------------

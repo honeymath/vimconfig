@@ -17,8 +17,8 @@ endif
 if filereadable(s:vimconfig_path . '/../vimconfig/config.ini')
 "if filereadable(expand('~/repositories/vimconfig/config.ini'))
 "  source ~/repositories/vimconfig/channel.vim
-"	 execute 'source ' . fnameescape(s:vimconfig_path . '/../vimconfig/channel.vim')
-	 execute 'source' . fnameescape(s:vimconfig_path. '/../vimconfig/worker.vim')
+	 execute 'source ' . fnameescape(s:vimconfig_path . '/../vimconfig/channel.vim')
+"	 execute 'source' . fnameescape(s:vimconfig_path. '/../vimconfig/worker.vim')
 else
   echo "Can not fine the config file: ".s:vimconfig_path . '/../vimconfig/config.ini'
 endif

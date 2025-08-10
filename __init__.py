@@ -1,0 +1,1 @@
+# vimconfig package init (empty on purpose)
