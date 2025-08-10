@@ -21,11 +21,12 @@ EXTERNAL_SERVERS = servers
 for section in config.sections():
     if section.startswith("server:"):
         if config.getboolean(section, "enabled", fallback=True):
-            servers.append({
-                "name": section.split(":", 1)[1],
-                "host": config.get(section, "host"),
-                "port": config.getint(section, "port"),
-            })
+            servers.append(( config.get(section, "host"), config.getint(section, "port")))
+#            servers.append({
+#                "name": section.split(":", 1)[1],
+#                "host": config.get(section, "host"),
+#                "port": config.getint(section, "port"),
+#            })
 
 # 发送启动 caller 的信号（需要根据你的 Vim 环境实现）
 def send_task_signal():
@@ -108,8 +109,8 @@ def listen_unix():
     unix_sock_path_base = config.get("unix_socket", "path", fallback="/tmp/vim_channel_")
     temp = sys.argv[1]
     UNIX_SOCK_PATH = f"~/Documents/{temp}.sock"# the file name completely determined by
-    UNIX_SOCK_PATH = os.path.expanduser(UNIX_SOCK_PATH)
-    print("Trying path at", unix_sock_path, flush = True)
+    UNIX_SOCKET_PATH = os.path.expanduser(UNIX_SOCK_PATH)
+    print("Trying path at", UNIX_SOCK_PATH, flush = True)
     if os.path.exists(UNIX_SOCKET_PATH):
         os.remove(UNIX_SOCKET_PATH)
     srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
