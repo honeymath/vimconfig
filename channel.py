@@ -4,6 +4,7 @@ import os
 import socket
 
 # 读取配置文件
+# channelv2.py
 config_path = os.path.join(os.path.dirname(__file__), 'config.ini')
 config = configparser.ConfigParser()
 config.read(config_path)
@@ -45,6 +46,7 @@ except Exception as e:
     print(f"Failed to local TCP {host}:{port} since ", e)
 
 # ===== 初始化 Unix socket =====
+# channelv2.py
 unix_sock_path_base = config.get("unix_socket", "path", fallback="/tmp/vim_channel_")
 temp = sys.argv[1]
 unix_sock_path = f"~/Documents/{temp}.sock"# the file name completely determined by
