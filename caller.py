@@ -4,21 +4,63 @@ import json
 import importlib.util
 import sys
 
-#ai: Here read the unix socket address form the first argument 
+#see: Here read the unix socket address form the first argument 
 socket = sys.argv[1]
-
-#ai: In this part , the logic of obtain command from socket, the output is a json
-def obtain_commands(socket):
-#Here from the socket to read the data
-    try:
-        msgs = json.loads(raw_data.decode())
-    except Exception as e:
-        return json.dumps({"success": False, "error": f"Invalid JSON: {e}"})
-    pass
-# the return should be a dictionary of tasks
+tasks = {}
 #end
 
-# Here we should also have some managers to call the tasks each each
+#ai: please try to write the codes
+def process_commands(socket_path):
+    import os
+
+    if not os.path.exists(socket_path):
+        print(f"[Caller] Unix socket not found: {socket_path}")
+        return
+
+    try:
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(socket_path)
+        print(f"[Caller] Connected to {socket_path}")
+    except Exception as e:
+        print(f"[Caller] Failed to connect: {e}")
+        return
+
+    # Step 1: 接收任务数据
+    try:
+        raw_data = sock.recv(65536)  # 假设任务数据一次发完
+        if not raw_data:
+            print("[Caller] No data received")
+            sock.close()
+            return
+        msgs = json.loads(raw_data.decode())
+    except Exception as e:
+        print(f"[Caller] Invalid JSON: {e}")
+        sock.close()
+        return
+
+    # Step 2: 存任务
+    if not isinstance(msgs, dict) or "tasks" not in msgs:
+        print("[Caller] Invalid tasks format")
+        sock.close()
+        return
+
+    for tid, request in msgs["tasks"].items():
+        tasks[tid] = request
+
+    # Step 3: 处理任务
+    for tid, request in list(tasks.items()):
+        print(f"[Caller] Processing task {tid}")
+        result_json = handle_external_message(request)
+        try:
+            sock.sendall(result_json.encode() + b"\n")
+            print(f"[Caller] Sent result for task {tid}")
+        except Exception as e:
+            print(f"[Caller] Failed to send result for {tid}: {e}")
+        del tasks[tid]
+
+    sock.close()
+    print("[Caller] Finished all tasks")
+#end
 
 
 def handle_external_message(msg):
@@ -40,12 +82,18 @@ def handle_external_message(msg):
         spec.loader.exec_module(module)
 
         if hasattr(module, "handler"):
-#ai:when handle this module.handler, need a wrapper pls, need to know its errout and printout and all infos!
+#ai:when handle this module.handler, need a wrapper pls, need to know its errout and printout and all infos! Consider includes a wrapper? need stdout, etc, please double check the tools/function_caller.py
             result = module.handler(**args)
-#end
             return json.dumps({"success": True, "result": result, "task_id": task_id})
         else:
             return json.dumps({"success": False, "error": "No handler() in tool", "task_id": task_id})
 
     except Exception as e:
         return json.dumps({"success": False, "error": str(e), "task_id": task_id})
+
+#end
+
+
+#see: I plan to just call process tasks here
+process_commands(socket)
+#end
