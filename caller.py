@@ -3,15 +3,15 @@
 import json
 import importlib.util
 import sys
+import os
 
-#see: Here read the unix socket address form the first argument 
-socket = sys.argv[1]
 tasks = {}
-#end
 
 #ai: please try to write the codes
-def process_commands(socket_path):
-    import os
+def process_commands(socket):
+    
+    file_path = os.path.dirname(os.path.abspath(__file__))
+    socket_path = os.path.join(file_path, socket)
 
     if not os.path.exists(socket_path):
         print(f"[Caller] Unix socket not found: {socket_path}")
@@ -115,6 +115,3 @@ def handle_external_message(msg):
 #end
 
 
-#see: I plan to just call process tasks here
-process_commands(socket)
-#end
