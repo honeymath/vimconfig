@@ -1,51 +1,46 @@
-## this file is a testing of worker mimicking
-
-
-import subprocess
+import multiprocessing
+import socketio
+import configparser
+import os
 import time
+import importlib
 
-## change the following code to python
+def run_channel_v3():
+    os.system(f"python3 {os.path.join(os.path.dirname(__file__), 'channel_v3.py')} testid")
 
-def generate_uuid():
-"""
-    let chars = '0123456789abcdefghijklmnopqrstuvwxyz'
-let s:t = localtime()
-let s:shortts = ''
-while s:t > 0
-    let s:shortts = chars[s:t % 36] . s:shortts
-    let s:t = s:t / 36
-endwhile
-"""
-    import time
-    import random
-    chars = '0123456789abcdefghijklmnopqrstuvwxyz'
-    s_t = int(time.time())
-    shortts = ''
-    while s_t > 0:
-        shortts = chars[s_t % 36] + shortts
-        s_t //= 36
-    return shortts 
-    
-uuid = ""
+if __name__ == "__main__":
+    config_path = os.path.join(os.path.dirname(__file__), "config.ini")
+    config = configparser.ConfigParser()
+    config.read(config_path)
+    host = config.get("server", "host", fallback="0.0.0.0")
+    port = config.getint("server", "port", fallback=8765)
 
-def run_worker():
-    global uuid
-    uuid = generate_uuid()
-    ## I want to run subprocess.run(["python3", "channelv3.py", uuid]), but also need a wrapper to simutaneously get its stdout and stderr, the code should be:
-    import subprocess
-    import sys
-    import os
-    import threading
-    import io
-    from contextlib import redirect_stdout, redirect_stderr
-    stdout_buffer = io.StringIO()
-    stderr_buffer = io.StringIO()
-    #threading??  the target, channelv3.py I wanna run is a service, so should run as a thread, while the stdout and stderr should be captured, like an event call whenever it flushes, I should get it
+    p = multiprocessing.Process(target=run_channel_v3)
+    p.start()
+    time.sleep(2)  # 等待 server 启动
 
-def call_caller():
-    global uuid
-    ## 
-    import caller
-    caller.process_command(uuid)
-    
+    sio = socketio.Client()
 
+    @sio.on("connect")
+    def on_connect():
+        print("[worker] Connected to channel_v3")
+
+    @sio.on("disconnect")
+    def on_disconnect():
+        print("[worker] Disconnected from channel_v3")
+
+    @sio.on("x")
+    def on_x(data):
+        print(f"[worker] Received 'x' event: {data}")
+        try:
+            color_module = importlib.import_module("color")
+            if hasattr(color_module, "handler"):
+                result = color_module.handler()
+                print(f"[worker] color.py handler() result: {result}")
+            else:
+                print("[worker] No handler() found in color.py")
+        except Exception as e:
+            print(f"[worker] Error calling color.py: {e}")
+
+    sio.connect(f"http://{host}:{port}")
+    sio.wait()
