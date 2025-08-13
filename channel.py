@@ -59,7 +59,7 @@ for srv in servers:
             )
 #end
 
-        url = f"{srv['host']}"+(":{srv['port']}" if int(srv['port'])>0 else "")
+        url = f"{srv['host']}"+(f":{srv['port']}" if int(srv['port'])>0 else "")
         print(f"Fucking connecting to {url}")
         sio_client.connect(url)
         remote_sios.append(sio_client)
@@ -159,5 +159,5 @@ if local_server_enabled:
         sid = request.sid
         push_task(data=data, callback=lambda x: socketio_flask.emit("result", x, to=sid))
 #end
-socketio_flask.run(app_flask, host=host, port=port)
+    socketio_flask.run(app_flask, host=host, port=port)
 
