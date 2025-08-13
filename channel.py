@@ -2,14 +2,19 @@ import configparser
 import json
 import os
 import socket
+import sys
+import socketio
+import threading
+from wsgiref import simple_server
 
-# 读取配置文件
-# channelv2.py
+# === The tasks collection
+tasks = {}
+# === 读取配置 ===
 config_path = os.path.join(os.path.dirname(__file__), 'config.ini')
 config = configparser.ConfigParser()
 config.read(config_path)
 
-# ===== 初始化外部 TCP 服务器连接 =====
+# 外部 TCP 服务器
 servers = []
 for section in config.sections():
     if section.startswith("server:"):
@@ -17,143 +22,142 @@ for section in config.sections():
             servers.append({
                 "name": section.split(":", 1)[1],
                 "host": config.get(section, "host"),
-                "port": config.getint(section, "port"),
+                "port": config.getint(section, "port", fallback=0),
             })
 
-print("servers",servers)
-tcp_sockets = {}
+# now we have to make client to connect to those remote socket servers, using socketio
+def push_task(data,callback):
+    import uuid
+    task_id = str(uuid.uuid4())
+    data["task_id"] = task_id
+    # store the socket reference and request data in tasks dict
+    tasks[task_id] = {"sock": callback, "request": data}  # ensure data is JSON serializable, replace the sock to callback fuckers.
+    send_task_signal()  # notify worker to fetch this task
+
+def send_task_signal():
+    print("X", flush = True)## send fucking X to notify the worker to call fucker to receive fuck.
+remote_sios = []
 for srv in servers:
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((srv["host"], srv["port"]))
-        tcp_sockets[srv["name"]] = sock
-        print(f"Connected to external server {srv['name']} at {srv['host']}:{srv['port']}")
+        sio_client = socketio.Client()
+
+        @sio_client.event
+        def connect():
+            print(f"[Remote:{srv['name']}] connected")
+
+        @sio_client.event
+        def disconnect():
+            print(f"[Remote:{srv['name']}] disconnected")
+
+        @sio_client.event
+        def message(data):
+            print(f"[Remote:{srv['name']}] message: {data}")
+#ai: just right here in the message , have to write down the logic to put to the fucking workflow and call the fucker by print X
+            push_task(
+                data=data,
+                callback=lambda x: sio_client.emit("result", x)
+            )
+#end
+
+        url = f"{srv['host']}"+(":{srv['port']}" if int(srv['port'])>0 else "")
+        print(f"Fucking connecting to {url}")
+        sio_client.connect(url)
+        remote_sios.append(sio_client)
     except Exception as e:
-        print(f"Failed to connect to server {srv['name']}: {e}")
+        print(f"[Remote:{srv['name']}] connection failed: {e}")
+## The following is the unix socket
+import socket
 
-# ===== 初始化本地 TCP 服务（可选） =====
-try:
-    local_server_sock = None
-    if config.getboolean("local_server", "enabled", fallback=False):
-        host = config.get("local_server", "host", fallback="0.0.0.0")
-        port = config.getint("local_server", "port", fallback=7777)
-        max_clients = config.getint("local_server", "max_clients", fallback=5)
-        local_server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        local_server_sock.bind((host, port))
-        local_server_sock.listen(max_clients)
-        print(f"Local TCP server listening on {host}:{port}")
-except Exception as e:
-    print(f"Failed to local TCP {host}:{port} since ", e)
+unix_enabled = config.getboolean("unix_socket", "enabled", fallback=False)
+unix_sock_path = None
 
-# ===== 初始化 Unix socket =====
-# channelv2.py
-unix_sock_path_base = config.get("unix_socket", "path", fallback="/tmp/vim_channel_")
-temp = sys.argv[1]
-unix_sock_path = f"~/Documents/{temp}.sock"# the file name completely determined by
-unix_sock_path = os.path.expanduser(unix_sock_path)
-print("Trying path at", unix_sock_path)
-if os.path.exists(unix_sock_path):
-    os.remove(unix_sock_path)
-
-unix_sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-unix_sock.bind(unix_sock_path)
-unix_sock.listen(1)
-print(f"Unix socket listening at {unix_sock_path}")
-
-# ===== 主循环（示例） =====
-try:
-    import threading
-    import sys
-    import select
-
-#ai: I am editing this part, 
-# I am thinking everytime tasks has append a task, then call worker to activate py3 from inside and try to execute the tasks...
-    tasks = {}  # {task_id: {"sock": sock, "request": 原始数据}}
-
-    def send_task(task_id):
-        print("NOTIFY_WORKER_TO_WORK") ## pring this to vim worker so it can establish the receiver
-#end
-
-    def listen_unix():
-        while True:
-            conn, _ = unix_sock.accept()
-            with conn:
-#ai: Is 4096 enough? do I have to think about continue receiving data until the end sign? also need to consider unix char?
-                data = conn.recv(4096)
-                if not data:
-                    continue
-#ai: Now this part has to be edited, this part is the processed data, and have to send back, have to check based on its id and our record, decide how to send it back
-            try:
-                msg = json.loads(data.decode())
-                task_id = msg.get("task_id")
-                if task_id and task_id in tasks:
-                    sock = tasks[task_id]["sock"]
-                    sock.sendall(json.dumps(msg).encode() + b"\n")
-                    del tasks[task_id]
-                    print(f"[UnixSock] Sent result for task {task_id} back to external client")
-                else:
-                    print(f"[UnixSock] Unknown or missing task_id: {task_id}")
-            except Exception as e:
-                print(f"[UnixSock] Failed to process data: {e}")
-#end
-    def listen_external():
-        while True:
-            if not tcp_sockets:
-                continue
-            rlist, _, _ = select.select(tcp_sockets.values(), [], [], 1)
-            for sock in rlist:
-                try:
-#ai: Do I have to receive the data until it fuly loads?
-                    data = sock.recv(4096)
-#end
-                    if data:
-                        import json
-                        msg = json.loads(data.decode())
-                        task_id = msg.get("task_id")
-                        if task_id:
-                            tasks[task_id] = {"sock": sock, "request": msg}
-                            print(f"[External] Stored task {task_id} from {sock.getpeername()}")
-                        else:
-                            print("[External] Missing task_id in message")
-                except Exception as e:
-                    print(f"[External] Failed to parse message: {e}")
-
-    def listen_local_server():
-        if not local_server_sock:
-            return
-        while True:
-            conn, addr = local_server_sock.accept()
-            with conn:
-                data = conn.recv(4096)
-                if not data:
-                    continue
-                print(f"{data.decode().strip()}")
-
-    def listen_stdin():
-        while True:
-            line = sys.stdin.readline()
-            if not line:
-                continue
-            if line.strip().lower() == "exit":
-                raise KeyboardInterrupt
-
-    # 启动多线程
-    threading.Thread(target=listen_unix, daemon=True).start()
-    threading.Thread(target=listen_external, daemon=True).start()
-    threading.Thread(target=listen_local_server, daemon=True).start()
-    threading.Thread(target=listen_stdin, daemon=True).start()
-
-    # 主线程空转保持存活
-    while True:
-        pass
-except KeyboardInterrupt:
-    print("Shutting down...")
-finally:
-    # 清理资源
-    for sock in tcp_sockets.values():
-        sock.close()
-    if local_server_sock:
-        local_server_sock.close()
-    unix_sock.close()
+if unix_enabled:
+    base_path = config.get("unix_socket", "path", fallback="~/")
+    temp_id = sys.argv[1] if len(sys.argv) > 1 else "default"
+    unix_sock_path = os.path.expanduser(os.path.join(base_path, f"{temp_id}.sock"))
     if os.path.exists(unix_sock_path):
         os.remove(unix_sock_path)
+    print(f"[channel_v5] Unix socket path: {unix_sock_path}")
+
+    def send_task(conn):
+        try:
+            tasks_without_sock = {i:tasks[i]["request"] for i in tasks}
+            data = tasks_without_sock.dump.encode("utf-8")
+            conn.sendall(data + b"\n")
+            print(f"[UnixSock] Sent {len(data)} bytes of task data", flush=True)
+        except Exception as e:
+            print(f"[UnixSock] Failed to send tasks: {e}", flush=True)
+
+    def handle_unix_client(conn):
+        try:
+            print("[UnixSock] Caller connected, sending tasks...", flush = True)
+            send_task(conn)
+            buffer = b""
+            while True:
+                part = conn.recv(4096)
+                if not part:
+                    break  # connection closed
+                buffer += part
+                while b"\n" in buffer:
+                    line, buffer = buffer.split(b"\n", 1)
+                    try:
+                        msg_text = line.decode("utf-8", errors='ignore').strip()
+                        msg = json.loads(msg_text)
+                    except json.JSONDecodeError:
+                        print(f"[UnixSock] Invalid JSON: {line!r}")
+                        continue
+                    except Exception as e:
+                        print(f"[UnixSock] Decode error: {e} | raw: {line!r}")
+                        continue
+                    task_id = msg.get("task_id")
+                    if task_id and task_id in tasks:
+                        suck = tasks[task_id]["sock"]
+                        suck(line + b"\n")#fuck all suck all
+                        del tasks[task_id]
+                        print(f"[UnixSock] Sent result for {task_id} back to origin", flush = True)
+                    else:
+                        print(f"[UnixSock] the task id can not be identified.")
+        except Exception as e:
+            print(f"[External] Error: {e}", flush = True)
+            print(f"[channel_v5] Unix socket message: {line}")
+        finally:
+            conn.close()
+
+    def unix_socket_server():
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as server_sock:
+            server_sock.bind(unix_sock_path)
+            server_sock.listen(1)
+            print(f"[channel_v5] Unix socket server listening at {unix_sock_path}")
+            while True:
+                conn, _ = server_sock.accept()
+                threading.Thread(target=handle_unix_client, args=(conn,), daemon=True).start()
+
+    threading.Thread(target=unix_socket_server, daemon=True).start()
+
+# finally 本地 Socket.IO 服务替代 TCP 客户端连接, longiveity
+from flask import Flask
+from flask_socketio import SocketIO
+
+local_server_enabled = config.getboolean("local_server", "enabled", fallback=False)
+local_server_sock = None
+
+if local_server_enabled:
+    host = config.get("local_server", "host", fallback="127.0.0.1")
+    port = config.getint("local_server", "port", fallback=5001)
+    app_flask = Flask(__name__)
+    socketio_flask = SocketIO(app_flask, cors_allowed_origins="*")
+
+    @socketio_flask.on('connect')
+    def handle_connect():
+        print(f"[channel_v5] Local Socket.IO client connected")
+
+#ai: am I right?
+    from flask import request
+
+    @socketio_flask.on('message')
+    def message(data):
+        sid = request.sid
+        push_task(data=data, callback=lambda x: socketio_flask.emit("result", x, to=sid))
+#end
+socketio_flask.run(app_flask, host=host, port=port)
+
