@@ -1,4 +1,5 @@
 import configparser
+import signal
 import json
 import os
 import socket
@@ -73,7 +74,7 @@ unix_sock_path = None
 
 if unix_enabled:
     base_path = config.get("unix_socket", "path", fallback="~/")
-    temp_id = sys.argv[1] if len(sys.argv) > 1 else "default"
+    temp_id = sys.argv[1] if len(sys.argv) > 1 else ""
     unix_sock_path = os.path.expanduser(os.path.join(base_path, f"{temp_id}.sock"))
     if os.path.exists(unix_sock_path):
         os.remove(unix_sock_path)
@@ -140,6 +141,15 @@ from flask_socketio import SocketIO
 
 local_server_enabled = config.getboolean("local_server", "enabled", fallback=False)
 local_server_sock = None
+def key_listener():
+     for line in sys.stdin:
+         if line.strip() == "x":
+             # 向当前进程发送 Ctrl+C 信号
+             print("kill")
+  #           os.kill(os.getpid(), signal.SIGINT)
+ 
+listener_thread = threading.Thread(target=key_listener, daemon=True)
+listener_thread.start()
 
 if local_server_enabled:
     host = config.get("local_server", "host", fallback="127.0.0.1")

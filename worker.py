@@ -13,7 +13,7 @@ import subprocess
 import threading
 
 p = subprocess.Popen(
-    ["python", os.path.join(os.path.dirname(__file__), "channel.py"), "testid"],
+    ["python", os.path.join(os.path.dirname(__file__), "channel.py"), "d"],
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
     text=True
