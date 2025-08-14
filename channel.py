@@ -169,5 +169,5 @@ if local_server_enabled:
         sid = request.sid
         push_task(data=data, callback=lambda x: socketio_flask.emit("result", x, to=sid))
 #end
-    socketio_flask.run(app_flask, host=host, port=port)
+    socketio_flask.run(app_flask, host=host, port=port,allow_unsafe_werkzeug=True)
 

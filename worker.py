@@ -26,10 +26,16 @@ threading.Thread(target=read_stream, args=(p.stdout, "STDOUT"), daemon=True).sta
 threading.Thread(target=read_stream, args=(p.stderr, "STDERR"), daemon=True).start()
 
 
-time.sleep(2)  # 等待 server 启动
-p.stdin.write("x\n")
-p.stdin.flush()
+time.sleep(6)  # 等待 server 启动
+#p.stdin.write("x\n")
+#p.stdin.flush()
+p.stdout.flush()
+p.terminate()
+p.kill()
+time.sleep(2)
+p.stdout.flush()
 
 
-time.sleep(5)  # 等待 server 启动
+time.sleep(3)  # 等待 server 启动
+p.stdout.flush()
 #end
