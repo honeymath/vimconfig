@@ -1,7 +1,7 @@
 # Fucking plan.
 
 ## establishing and testing for channel.py
-Establish a socket client connected to mac-mini llmos app.py which is sending messages, (the channel.py have to print the message upon received) the other client requests for inputs and send the inputed message back to the client.
+Establish a socket client connected to mac-mini llmos app.py which is sending messages, (the channel.py have to print the message upon received) the other client requests for inputs and send the inputed message back to the client. An example is, I believe when I fucking click the double, it should be something popa outa.
 
 Also try another approach to estabilish a socket client directly to the service provided by channel.py
 
