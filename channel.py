@@ -145,8 +145,8 @@ def key_listener():
      for line in sys.stdin:
          if line.strip() == "x":
              # 向当前进程发送 Ctrl+C 信号
-             print("kill")
-  #           os.kill(os.getpid(), signal.SIGINT)
+             print(f"kill {os.getpid()}")
+             os.kill(os.getpid(), signal.SIGINT)
  
 listener_thread = threading.Thread(target=key_listener, daemon=True)
 listener_thread.start()
