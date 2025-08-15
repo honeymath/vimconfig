@@ -52,6 +52,7 @@ for srv in servers:
             y = msg.get('pageY_pdf')
             pdf_file = msg.get('filestamp')
             print(f"{msg}, {page}, {x}, {y}", flush=True)
+            print("X",flush=True)
 
         @sio_client.event
         def connect():
@@ -154,6 +155,7 @@ local_server_enabled = config.getboolean("local_server", "enabled", fallback=Fal
 local_server_sock = None
 def key_listener():
      for line in sys.stdin:
+         print(f"Reciva:{line}",flush=True)
          if line.strip() == "x":
              # 向当前进程发送 Ctrl+C 信号
              print(f"kill {os.getpid()}")
