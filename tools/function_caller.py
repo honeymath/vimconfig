@@ -1,5 +1,6 @@
 import traceback
 def call_function(func, args):
+#    print(f"THE CALL FUNCTION{func} with {args} HAD BEEN CALLED", flush=True)
     """
     Due to the limitation of Vim, this is a wrapper function to call and catch the traceback. It has parameters,
     func: The funcation, it must be callable.

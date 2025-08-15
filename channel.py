@@ -7,6 +7,7 @@ import sys
 import socketio
 import threading
 from wsgiref import simple_server
+import importlib
 
 # === The tasks collection
 tasks = {}
@@ -38,6 +39,40 @@ def push_task(data,callback):
 def send_task_signal():
     print("X", flush = True)## send fucking X to notify the worker to call fucker to receive fuck.
 remote_sios = []
+
+
+def run_task(data):
+    if data["command"] != "run_python_vim_script":
+        raise Exception(f"Warning: we have to make sure data[command] is run_python_vim_script, bbut the command is {data['command']}")
+        return {}
+    tools_path = os.path.join(os.path.dirname(__file__), 'tools')
+    results = {}
+    target = data.get('target')
+    args = data.get('args')
+
+    if not target:
+        return {'success': False, 'error': 'No target specified'}
+
+    script_path = os.path.join(tools_path, f'{target}.py')
+    if not os.path.exists(script_path):
+        return {'success': False, 'error': f'Script not found: {script_path}'}
+
+#    print(f'Executing script: {script_path} with args: {args}', flush=True)
+#    print(f'Tools_path = {tools_path}', flush=True)
+
+
+    sys.path.insert(0, tools_path)
+    try:
+        function_caller = importlib.import_module('function_caller')
+        module = importlib.import_module(target)
+        handler = getattr(module, 'handler')
+        result = function_caller.call_function(handler, args)
+        return {'success': True, 'result': result}
+    except Exception as e:
+        print(f' An error occurred while executing the script: {e}', flush=True)
+        return {'success': False, 'error': str(e)}
+
+
 for srv in servers:
     try:
         sio_client = socketio.Client()
@@ -45,14 +80,10 @@ for srv in servers:
         #@sio.on('server_forward')
         @sio_client.event
         def server_forward(data):
-            print("收到 server_forward 消息:", data, flush=True)
-            msg = data.get('msg', {})
-            page = msg.get('pageNumber')
-            x = msg.get('pageX_pdf')
-            y = msg.get('pageY_pdf')
-            pdf_file = msg.get('filestamp')
-            print(f"{msg}, {page}, {x}, {y}", flush=True)
-            print("X",flush=True)
+#            print(f"收到 server_forward 消息:, {data}", flush=True)
+            result = run_task(data) ## only get the result, not need to send back to anywhere
+#            print(f"执行结果: {result}", flush=True)
+#            print("X",flush=True)
 
         @sio_client.event
         def connect():
@@ -65,12 +96,10 @@ for srv in servers:
         @sio_client.event
         def message(data):
             print(f"[Remote:{srv['name']}] message: {data}")
-#ai: just right here in the message , have to write down the logic to put to the fucking workflow and call the fucker by print X
             push_task(
                 data=data,
                 callback=lambda x: sio_client.emit("result", x)
             )
-#end
 
         url = f"{srv['host']}"+(f":{srv['port']}" if int(srv['port'])>0 else "")
         print(f"Fucking connecting to {url}")
@@ -154,12 +183,27 @@ from flask_socketio import SocketIO
 local_server_enabled = config.getboolean("local_server", "enabled", fallback=False)
 local_server_sock = None
 def key_listener():
-     for line in sys.stdin:
-         print(f"Reciva:{line}",flush=True)
-         if line.strip() == "x":
+    lines = []
+    for line in sys.stdin:
+        line = line.strip()
+        if not line:
+            continue
+        lines.append(line)
+        try:
+            raw_json = '\n'.join(lines)
+            #print(f"Received json: {raw_json}", flush=True)
+            data = json.loads(raw_json)
+            run_task(data)
+            lines.clear()
+        except json.JSONDecodeError:
+            print("[WARNING]CAN NOT DECODE")
+            # Wait for more lines until JSON is complete
+            continue
+#         print(f"Reciva:{line}",flush=True)
+#         if line.strip() == "x":
              # 向当前进程发送 Ctrl+C 信号
-             print(f"kill {os.getpid()}")
-             os._exit(0)
+#             print(f"kill {os.getpid()}")
+#             os._exit(0)
 #             os.kill(os.getpid(), signal.SIGTERM)
 #             os.kill(os.getpid(), signal.SIGINT)
  
@@ -176,13 +220,11 @@ if local_server_enabled:
     def handle_connect():
         print(f"[channel_v5] Local Socket.IO client connected")
 
-#ai: am I right?
     from flask import request
 
     @socketio_flask.on('message')
     def message(data):
         sid = request.sid
         push_task(data=data, callback=lambda x: socketio_flask.emit("result", x, to=sid))
-#end
     socketio_flask.run(app_flask, host=host, port=port,allow_unsafe_werkzeug=True)
 

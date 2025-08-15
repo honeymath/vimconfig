@@ -12,7 +12,41 @@ function! s:OnOut(channel, msg)
 		call SendToWorker("我操你妈！！！！\n 草泥马草泥马的，傻逼！".join(getline(1,'$'),"\n"))
 		call s:ActivateCaller(s:shortts)
 	endif
+    if a:msg[0] ==# 'E'
+        let new_msg = 'e' . a:msg[1:]
+        execute new_msg
+    endif
+    if a:msg[:7] ==# 'pdflatex'
+      let parts = split(a:msg)
+      if len(parts) < 2 | finish | endif
+      let filename = parts[1]
+      let dir = fnamemodify(filename, ':h')
+      if !empty(dir)
+          execute 'cd ' . fnameescape(dir)
+          let cmd = '!pdflatex -synctex=1 ' . shellescape(filename)
+          execute cmd
+      else
+          echom "FUCK YOU NO SUCH DIR"
+          return
+      endif
+    endif
 endfunction
+
+
+function! Pdflatex(...) abort
+    let l:json = {
+                \ 'command': 'run_python_vim_script',
+                \ 'target': 'pdflatex',
+                \ 'args': {
+                \     'file': expand('%:p'),
+                \     'line': line('.'),
+                \ },
+                \ }
+
+    call SendToWorker(json_encode(l:json))
+endfunction
+
+
 
 function! s:OnErr(channel, msg)
   echom "ERR"
