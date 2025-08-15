@@ -42,6 +42,17 @@ for srv in servers:
     try:
         sio_client = socketio.Client()
 
+        #@sio.on('server_forward')
+        @sio_client.event
+        def server_forward(data):
+            print("收到 server_forward 消息:", data, flush=True)
+            msg = data.get('msg', {})
+            page = msg.get('pageNumber')
+            x = msg.get('pageX_pdf')
+            y = msg.get('pageY_pdf')
+            pdf_file = msg.get('filestamp')
+            print(f"{msg}, {page}, {x}, {y}", flush=True)
+
         @sio_client.event
         def connect():
             print(f"[Remote:{srv['name']}] connected")
