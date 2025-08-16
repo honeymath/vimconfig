@@ -5,7 +5,7 @@ function! s:OnOut(channel, msg)
 		echom '[stdout] ' . a:msg
 	endif
 	let lnum = line('.')
-	call setline(lnum, getline(lnum).a:msg)
+"	call setline(lnum, getline(lnum).a:msg)
 	if(a:msg == 'X')
 		"X for running the script
 		call append(line('.'),'miaomiao')
@@ -85,7 +85,7 @@ function! s:OnErr(channel, msg)
     echom '[stderr] ' . a:msg
   endif
 	let lnum = line('.')
-	call setline(lnum, getline(lnum).a:msg)
+"	call setline(lnum, getline(lnum).a:msg)
 endfunction
 
 function! s:OnExit(job, status)
