@@ -254,7 +254,7 @@ def handler(**data):
     sabi = {k:v for k,v in line_dict[str(until)].items()}
     print(f"Result: {sabi}",flush=True)
     sabi["filestamp"]="fuck"
-    sabi["refresh"]=True
+    sabi["refresh"]=1
     sabi["zoom"]=1.0
     config_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "../config.ini"))
     config = configparser.ConfigParser()
