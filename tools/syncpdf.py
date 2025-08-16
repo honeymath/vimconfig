@@ -1,5 +1,5 @@
-
-
+import requests
+import configparser
 import subprocess
 import os
 import sys
@@ -243,7 +243,28 @@ def handler(**data):
         raise Exception(f"No valid line found in forward map for {path} with given line {line}")
 
     print(f"GOT THE UNTIL: {line_dict[str(until)]}", flush=True)
-    return line_dict[str(until)]
+
+    ## now load the config and click the fucker
+
+    sabi = {k:v for k,v in line_dict[str(until)].items()}
+    sabi["filestamp"]="fuck"
+    sabi["refresh"]=True
+    config_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "../config.ini"))
+    config = configparser.ConfigParser()
+    config.read(config_path)
+    host = config.get("local_server", "host", fallback="localhost")
+    port = config.get("local_server", "port", fallback=5001)
+    results = requests.get(f"{host}:{port}/send_pdf_reload",params = sabi)
+
+
+
+
+
+
+
+
+
+    return sabi#line_dict[str(until)]
     ### the following logic is to find out the main.tex in the above langauge.
 
     #the following: run pdflatex on the taregt
