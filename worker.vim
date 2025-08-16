@@ -30,7 +30,19 @@ function! s:OnOut(channel, msg)
 	    "echo l:output
 	    return
 	  endif
-	  call Syncpdf(filename)
+	  echom "准备草泥马中。。。"
+	    let l:tosync = {
+                \ 'command': 'run_python_vim_script',
+                \ 'target': 'syncpdf',
+                \ 'args': {
+                \     'file': filename,
+                \     'line': line('.'),
+                \ },
+                \ }
+	    let rinima = json_encode(l:tosync)
+	    echom "草泥马的比！！！！！！日你妈的值是"
+	    echom rinima
+	    call SendToWorker(rinima)
       else
           echom "FUCK YOU NO SUCH DIR"
           return
@@ -38,12 +50,14 @@ function! s:OnOut(channel, msg)
     endif
 endfunction
 
-function Syncpdf(filename)
+function! Syncpdf(s:filename)
+    echom "草泥马的比！！！！！！ syncpdf 草泥马！！！"
     let l:tosync = {
                 \ 'command': 'run_python_vim_script',
                 \ 'target': 'syncpdf',
                 \ 'args': {
-                \     'file': filename,
+                \     'file': s:filename,
+                \     'line': line('.'),
                 \ },
                 \ }
     call SendToWorker(json_encode(l:tosync))
@@ -86,7 +100,8 @@ function! SendToWorker(msg)
     call ch_sendraw(s:fuck_id, a:msg . "\n")
 endfunction
 
-function! Startfuck(s:fuckyou)
+
+function Startwork()
 	let s:opts = {
 	      \ 'in_io' : "pipe",
 	      \ 'out_cb': function('s:OnOut'),
@@ -95,27 +110,14 @@ function! Startfuck(s:fuckyou)
 	      \ }
 	echom "I am fucking here"
 	let s:path = expand(fnamemodify(expand('<sfile>'), ':p:h') . '/channel.py')
-	echom s:path
+	let parts    = split(s:path, '\.\.')
+	let s:fuckers = parts[-1]         " get last element
+	echom "fukers!"
+	echom s:fuckers
 	echom "The sfile is"
 	echom expand('<sfile>')
-
-
-"	let chars = '0123456789abcdefghijklmnopqrstuvwxyz'
-"	let s:t = localtime()
-"	let s:shortts = ''
-"	while s:t > 0
-"	    let s:shortts = chars[s:t % 36] . s:shortts
-"	    let s:t = s:t / 36
-"	endwhile
-"	echom 'Fucking shortts: ' . s:shortts
-
-
-
-
- "   let s:path = s:fuckyou
-    echom "FUCKYOU PATH"
- "   echom s:fuckyou
-	let s:job_id = job_start(['python', s:path], s:opts)
+	    echom "FUCKYOU PATH"
+	let s:job_id = job_start(['python', s:fuckers], s:opts)
 	let s:fuck_id = job_getchannel(s:job_id)
 endfunction
-
+nnoremap ≤ :call Pdflatex() <CR><CR>:redraw!<CR>
