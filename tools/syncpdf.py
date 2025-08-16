@@ -1,3 +1,5 @@
+
+import requests
 import configparser
 import subprocess
 import os
@@ -253,6 +255,7 @@ def handler(**data):
     print(f"Result: {sabi}",flush=True)
     sabi["filestamp"]="fuck"
     sabi["refresh"]=True
+    sabi["zoom"]=1.0
     config_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "../config.ini"))
     config = configparser.ConfigParser()
     config.read(config_path)
@@ -262,9 +265,9 @@ def handler(**data):
     try:
         addr = f"http://{host}:{port}/send_pdf_reload"
         print(f"Get ready to ge the result?I will do {addr}?{sabi} ", flush = True)
-        results = requests.get(f"http://{host}:{port}/send_pdf_reload")#,params = sabi)
+        results = requests.get(f"http://{host}:{port}/send_pdf_reload",params = sabi)
         print("you know what? the result comes!!!!", flush = True)
-        print(f"Now the test is {results.text}", flush = True)
+        print(f"Now the results that coming is {results.text}", flush = True)
     except Exception as e:
         print(e)
 
@@ -276,7 +279,7 @@ def handler(**data):
 
 
 
-    return sabi#line_dict[str(until)]
+    return results.text#line_dict[str(until)]
     ### the following logic is to find out the main.tex in the above langauge.
 
     #the following: run pdflatex on the taregt
