@@ -1,6 +1,5 @@
 
 
-
 import subprocess
 import os
 import sys
@@ -151,6 +150,7 @@ def draw_boxes( synctex_path, json_dir):
     with open(filetable_file, "w", encoding="utf-8") as f: ## added by human
         json.dump(filetable, f, indent = 2)
     print("FUCKING BOXES DRAWN AND SAVED!", flush=True)
+    return reverse_map,forward_map, filetable ## the filetable have to be used again
 
 
 
@@ -189,7 +189,58 @@ def handler(**data):
 
     print(f"FUCKING synctex_path: {synctex_path}", flush=True)
    
-    draw_boxes(synctex_path = synctex_path, json_dir = json_path)
+    reverse_map, forward_map, filetable = draw_boxes(synctex_path = synctex_path, json_dir = json_path)
+
+
+    print(f"NOW DOING FUCK FUCK AGIN", flush=True)
+    searchfile = data.get("searchfile", None)
+    if searchfile is None:
+        print("Error: 'searchfile' is missing", flush = True)
+        return
+    
+
+   ### The following are search file logic 
+    print(f"Now searching file begins with {searchfile}", flush = True)
+    path = os.path.normpath(os.path.expanduser(searchfile)).strip()
+    filekey = None
+
+    #print(f"READY?GO206", flush = True)
+    
+    #print(f"FILETABLE {filetable}", flush=True)
+    file_map = filetable
+
+    for key, value in file_map.items():
+        if value.strip() == path:
+            filekey = key
+            break
+
+    #print(f"GOT KEY VALUE{filekey}",flush = True)
+
+    if filekey is None:
+        print(f"Error: not able to find file {path}", flush = True)
+        raise Exception(f"Not able to find the suggested file {path}")
+
+    if filekey not in forward_map:
+        print(f"Not able to identify the file in the forward map {path} with filekey {filekey}", flush = True)
+        raise Exception(f"Not able to identify the file in the forward map {path} with filekey {filekey}")
+
+    line_dict = forward_map[filekey]
+    parsed_lines = sorted(map(int, line_dict.keys()))
+
+    #print(f"Parsed lines: {parsed_lines}", flush=True)
+
+    until = None
+    for l in parsed_lines:
+        if l <= line:
+            until = l
+        else:
+            break
+
+    if until is None:
+        raise Exception(f"No valid line found in forward map for {path} with given line {line}")
+
+    print(f"GOT THE UNTIL: {line_dict[str(until)]}", flush=True)
+    return line_dict[str(until)]
     ### the following logic is to find out the main.tex in the above langauge.
 
     #the following: run pdflatex on the taregt
@@ -204,3 +255,15 @@ def handler(**data):
 
     ### then copy the color code here to decode the synctex, put the file into the static as synctex, and json.
     ### then from the file data and the line data try to forward search.. sure apply the logic here. 
+
+if __name__ == "__main__":
+    para = {'file': '/Users/qiruili/repositories/688ab3080dfb1b2f53fde40a/main.tex', 'line': 2, 'searchfile': '/Users/qiruili/repositories/688ab3080dfb1b2f53fde40a/contents/total-space/cm-cycles.tex'}
+    para = {'file': '/Users/qiruili/repositories/688ab3080dfb1b2f53fde40a/main.tex', 'line': 5, 'searchfile': '/Users/qiruili/repositories/688ab3080dfb1b2f53fde40a/contents/analytic-side/orbits-classification.tex'}
+    result = handler(**para)
+    print(f"Result: {result}", flush=True)
+#    if len(sys.argv) < 2:
+#        print("Usage: python syncpdf.py <synctex_path>")
+#        sys.exit(1)
+#    synctex_path = sys.argv[1]
+#    json_dir = "static"
+#    draw_boxes(synctex_path, json_dir)

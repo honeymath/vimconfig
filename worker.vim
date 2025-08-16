@@ -37,6 +37,7 @@ function! s:OnOut(channel, msg)
                 \ 'args': {
                 \     'file': filename,
                 \     'line': line('.'),
+                \     'searchfile': expand('%:p'),
                 \ },
                 \ }
 	    let rinima = json_encode(l:tosync)
