@@ -10,13 +10,13 @@ import gzip
 
 
 def parse_synctex(synctex_path):
-    print(f"Parsing synctex file: {synctex_path}", flush=True)
+    #print(f"Parsing synctex file: {synctex_path}", flush=True)
     data = []
     files = {}
     with open(synctex_path, "r", encoding="utf-8", errors="ignore") as f:
         lines = f.readlines()
 
-    print(f"Total lines in synctex: {len(lines)}", flush=True)
+#    print(f"Total lines in synctex: {len(lines)}", flush=True)
 
     content_mode = False
     current_pdf_page_index = None
@@ -63,7 +63,7 @@ def parse_synctex(synctex_path):
                     })
                 except:
                     pass
-    print(f"Prepare for return ", flush=True)
+#    print(f"Prepare for return ", flush=True)
     return data, files
 
 def type_color(t):
@@ -79,7 +79,7 @@ def type_color(t):
         return (0, 0, 0)  # black
 
 def build_forward_map(records):
-    print("Building forward map...", flush=True)
+#    print("Building forward map...", flush=True)
     forward_map = {}
     seen = set()
     for rec in records:
@@ -93,11 +93,11 @@ def build_forward_map(records):
             }
     # 排序 key
     forward_map_sorted = {k: dict(sorted(v.items(), key=lambda kv: int(kv[0]))) for k, v in sorted(forward_map.items(), key=lambda kv: int(kv[0]))}
-    print(f"Forward map built with {len(forward_map_sorted)} entries. Prepare return", flush=True)
+    #print(f"Forward map built with {len(forward_map_sorted)} entries. Prepare return", flush=True)
     return forward_map_sorted
 
 def build_reverse_map(records):
-    print("Building reverse map...", flush=True)
+    #print("Building reverse map...", flush=True)
     reverse_map = {}
     for rec in records:
         page = str(rec['pdf_page_index']+1)  # 1-based page
@@ -123,16 +123,16 @@ def build_reverse_map(records):
             new_ydict[y] = merged
         reverse_map[page] = new_ydict
     reverse_map_sorted = dict(sorted(reverse_map.items(), key=lambda kv: int(kv[0])))
-    print(f"Reverse map built with {len(reverse_map_sorted)} pages. Prepare return", flush=True)
+    #print(f"Reverse map built with {len(reverse_map_sorted)} pages. Prepare return", flush=True)
     return reverse_map_sorted
 
 def draw_boxes( synctex_path, json_dir):
-    print("BOXES! FUCKING BOXES!", flush=True)
-    print(f"synctex_path: {synctex_path}", flush=True)
-    print(f"json_dir: {json_dir}", flush=True)
+    #print("BOXES! FUCKING BOXES!", flush=True)
+    #print(f"synctex_path: {synctex_path}", flush=True)
+    #print(f"json_dir: {json_dir}", flush=True)
     records , filetable = parse_synctex(synctex_path)
-    print(f"Total records parsed: {len(records)}", flush=True)
-    print(f"Total files parsed: {len(filetable)}", flush=True)
+    #print(f"Total records parsed: {len(records)}", flush=True)
+    #print(f"Total files parsed: {len(filetable)}", flush=True)
 
     forward_map = build_forward_map(records)
     reverse_map = build_reverse_map(records)
@@ -149,7 +149,7 @@ def draw_boxes( synctex_path, json_dir):
     filetable_file = os.path.join(full_dir, "file_map.json")
     with open(filetable_file, "w", encoding="utf-8") as f: ## added by human
         json.dump(filetable, f, indent = 2)
-    print("FUCKING BOXES DRAWN AND SAVED!", flush=True)
+    #print("FUCKING BOXES DRAWN AND SAVED!", flush=True)
     return reverse_map,forward_map, filetable ## the filetable have to be used again
 
 
@@ -164,7 +164,7 @@ def handler(**data):
     dirname = os.path.dirname(latexfile) ## the directory of the latex file
     syncgz = os.path.join(dirname,"main.synctex.gz")
     synctex_path = os.path.join(dirname, "main.synctex")
-    print(f"PREPARING THOSE FUCKING PATH FUCKINGS: syncgz::{syncgz}, synctex_path::{synctex_path}", flush=True)
+    #print(f"PREPARING THOSE FUCKING PATH FUCKINGS: syncgz::{syncgz}, synctex_path::{synctex_path}", flush=True)
     try:
         with gzip.open(syncgz, "rb") as f_in, open(synctex_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
@@ -182,20 +182,20 @@ def handler(**data):
         print("Error: 'file' or 'line' parameter is missing.", flush=True)
         return
 
-    print(f"NOW YOU HAVE GUNZIPED FUCK FUCK", flush=True)
-    print(f"file: {latexfile}, line: {line}", flush=True) 
+    #print(f"NOW YOU HAVE GUNZIPED FUCK FUCK", flush=True)
+    #print(f"file: {latexfile}, line: {line}", flush=True) 
     json_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '../static'))
     os.makedirs(json_path, exist_ok=True)
 
     shutil.copy(os.path.join(dirname,"main.pdf"),os.path.join(json_path,"main.pdf"))## copy the fucking pdf file into fucks.
 
 
-    print(f"PDF file copied. FUCKING synctex_path: {synctex_path}", flush=True)
+    #print(f"PDF file copied. FUCKING synctex_path: {synctex_path}", flush=True)
    
     reverse_map, forward_map, filetable = draw_boxes(synctex_path = synctex_path, json_dir = json_path)
 
 
-    print(f"NOW DOING FUCK FUCK AGIN", flush=True)
+    #print(f"NOW DOING FUCK FUCK AGIN", flush=True)
     searchfile = data.get("searchfile", None)
     if searchfile is None:
         print("Error: 'searchfile' is missing", flush = True)
@@ -203,7 +203,7 @@ def handler(**data):
     
 
    ### The following are search file logic 
-    print(f"Now searching file begins with {searchfile}", flush = True)
+    #print(f"Now searching file begins with {searchfile}", flush = True)
     path = os.path.normpath(os.path.expanduser(searchfile)).strip()
     filekey = None
 
@@ -242,11 +242,13 @@ def handler(**data):
     if until is None:
         raise Exception(f"No valid line found in forward map for {path} with given line {line}")
 
-    print(f"GOT THE UNTIL: {line_dict[str(until)]}", flush=True)
+#    print(f"GOT THE UNTIL: {line_dict[str(until)]}", flush=True)
 
     ## now load the config and click the fucker
 
+
     sabi = {k:v for k,v in line_dict[str(until)].items()}
+    print(f"FUCKING FUCKING result: {sabi}",flush=True)
     sabi["filestamp"]="fuck"
     sabi["refresh"]=True
     config_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "../config.ini"))
@@ -254,7 +256,10 @@ def handler(**data):
     config.read(config_path)
     host = config.get("local_server", "host", fallback="localhost")
     port = config.get("local_server", "port", fallback=5001)
-    results = requests.get(f"{host}:{port}/send_pdf_reload",params = sabi)
+    try:
+        results = requests.get(f"{host}:{port}/send_pdf_reload",params = sabi)
+    except Exception as e:
+        print(e)
 
 
 

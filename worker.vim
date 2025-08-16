@@ -84,6 +84,8 @@ function! s:OnErr(channel, msg)
   if !empty(a:msg)
     echom '[stderr] ' . a:msg
   endif
+	let lnum = line('.')
+	call setline(lnum, getline(lnum).a:msg)
 endfunction
 
 function! s:OnExit(job, status)
