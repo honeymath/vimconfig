@@ -187,7 +187,10 @@ def handler(**data):
     json_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '../static'))
     os.makedirs(json_path, exist_ok=True)
 
-    print(f"FUCKING synctex_path: {synctex_path}", flush=True)
+    shutil.copy(os.path.join(dirname,"main.pdf"),os.path.join(json_path,"main.pdf"))## copy the fucking pdf file into fucks.
+
+
+    print(f"PDF file copied. FUCKING synctex_path: {synctex_path}", flush=True)
    
     reverse_map, forward_map, filetable = draw_boxes(synctex_path = synctex_path, json_dir = json_path)
 
