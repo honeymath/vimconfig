@@ -1,4 +1,3 @@
-
 import configparser
 import subprocess
 import os
@@ -261,7 +260,11 @@ def handler(**data):
     port = config.get("local_server", "port", fallback=5001)
     print(f"Config has been obtained host = {host} and port = {port}", flush = True)
     try:
-        results = requests.get(f"{host}:{port}/send_pdf_reload",params = sabi)
+        addr = f"http://{host}:{port}/send_pdf_reload"
+        print(f"Get ready to ge the result?I will do {addr}?{sabi} ", flush = True)
+        results = requests.get(f"http://{host}:{port}/send_pdf_reload")#,params = sabi)
+        print("you know what? the result comes!!!!", flush = True)
+        print(f"Now the test is {results.text}", flush = True)
     except Exception as e:
         print(e)
 
