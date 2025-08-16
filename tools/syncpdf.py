@@ -5,14 +5,19 @@ import subprocess
 import os
 import sys
 import json
+import shutil
+import gzip
 
 
 
 def parse_synctex(synctex_path):
+    print(f"Parsing synctex file: {synctex_path}", flush=True)
     data = []
     files = {}
     with open(synctex_path, "r", encoding="utf-8", errors="ignore") as f:
         lines = f.readlines()
+
+    print(f"Total lines in synctex: {len(lines)}", flush=True)
 
     content_mode = False
     current_pdf_page_index = None
@@ -59,6 +64,7 @@ def parse_synctex(synctex_path):
                     })
                 except:
                     pass
+    print(f"Prepare for return ", flush=True)
     return data, files
 
 def type_color(t):
@@ -74,6 +80,7 @@ def type_color(t):
         return (0, 0, 0)  # black
 
 def build_forward_map(records):
+    print("Building forward map...", flush=True)
     forward_map = {}
     seen = set()
     for rec in records:
@@ -87,9 +94,11 @@ def build_forward_map(records):
             }
     # 排序 key
     forward_map_sorted = {k: dict(sorted(v.items(), key=lambda kv: int(kv[0]))) for k, v in sorted(forward_map.items(), key=lambda kv: int(kv[0]))}
+    print(f"Forward map built with {len(forward_map_sorted)} entries. Prepare return", flush=True)
     return forward_map_sorted
 
 def build_reverse_map(records):
+    print("Building reverse map...", flush=True)
     reverse_map = {}
     for rec in records:
         page = str(rec['pdf_page_index']+1)  # 1-based page
@@ -115,6 +124,7 @@ def build_reverse_map(records):
             new_ydict[y] = merged
         reverse_map[page] = new_ydict
     reverse_map_sorted = dict(sorted(reverse_map.items(), key=lambda kv: int(kv[0])))
+    print(f"Reverse map built with {len(reverse_map_sorted)} pages. Prepare return", flush=True)
     return reverse_map_sorted
 
 def draw_boxes( synctex_path, json_dir):
@@ -122,17 +132,25 @@ def draw_boxes( synctex_path, json_dir):
     print(f"synctex_path: {synctex_path}", flush=True)
     print(f"json_dir: {json_dir}", flush=True)
     records , filetable = parse_synctex(synctex_path)
+    print(f"Total records parsed: {len(records)}", flush=True)
+    print(f"Total files parsed: {len(filetable)}", flush=True)
 
     forward_map = build_forward_map(records)
     reverse_map = build_reverse_map(records)
     
     full_dir = os.path.join(os.path.dirname(__file__), json_dir)
-    with open(os.join(full_dir,"forward_map.json"), "w", encoding="utf-8") as f:
+
+    forward_file = os.path.join(full_dir, "forward_map.json")
+
+    with open(forward_file, "w", encoding="utf-8") as f:
         json.dump(forward_map, f, indent=2)
-    with open(os.join(full_dir,"reverse_map.json"), "w", encoding="utf-8") as f:
+    reverse_file = os.path.join(full_dir, "reverse_map.json")
+    with open(reverse_file, "w", encoding="utf-8") as f:
         json.dump(reverse_map, f, indent=2)
-    with open(os.join(full_dir,"file_map.json"), "w", encoding="utf-8") as f: ## added by human
+    filetable_file = os.path.join(full_dir, "file_map.json")
+    with open(filetable_file, "w", encoding="utf-8") as f: ## added by human
         json.dump(filetable, f, indent = 2)
+    print("FUCKING BOXES DRAWN AND SAVED!", flush=True)
 
 
 
@@ -144,20 +162,32 @@ def handler(**data):
     latexfile = data.get("file", None) ## the latex file with main.tex at the end
     ## get syntex gz
     dirname = os.path.dirname(latexfile) ## the directory of the latex file
-    syncgz = os.path.join(dirname,"/main.synctex.gz")
-    ## unzip the synctex.gz file
+    syncgz = os.path.join(dirname,"main.synctex.gz")
     synctex_path = os.path.join(dirname, "main.synctex")
+    print(f"PREPARING THOSE FUCKING PATH FUCKINGS: syncgz::{syncgz}, synctex_path::{synctex_path}", flush=True)
+    try:
+        with gzip.open(syncgz, "rb") as f_in, open(synctex_path, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    except Exception as e:
+        print(f"Error during gunzip: {e}", flush=True)
+        return
     
         
 
 
 
+        
     line = data.get("line", None) ## the line number
-    print(f"file: {file}, line: {line}", flush=True) 
-    json_path = os.path.join(os.path.dirname(__file__), '../static')
+    if line is None or latexfile is None:
+        print("Error: 'file' or 'line' parameter is missing.", flush=True)
+        return
+
+    print(f"NOW YOU HAVE GUNZIPED FUCK FUCK", flush=True)
+    print(f"file: {latexfile}, line: {line}", flush=True) 
+    json_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '../static'))
     os.makedirs(json_path, exist_ok=True)
 
-    print(f"synctex_path: {synctex_path}", flush=True)
+    print(f"FUCKING synctex_path: {synctex_path}", flush=True)
    
     draw_boxes(synctex_path = synctex_path, json_dir = json_path)
     ### the following logic is to find out the main.tex in the above langauge.
