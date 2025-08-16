@@ -1,4 +1,4 @@
-import requests
+
 import configparser
 import subprocess
 import os
@@ -203,7 +203,7 @@ def handler(**data):
     
 
    ### The following are search file logic 
-    #print(f"Now searching file begins with {searchfile}", flush = True)
+    print(f"Now searching file begins with {searchfile}", flush = True)
     path = os.path.normpath(os.path.expanduser(searchfile)).strip()
     filekey = None
 
@@ -217,7 +217,7 @@ def handler(**data):
             filekey = key
             break
 
-    #print(f"GOT KEY VALUE{filekey}",flush = True)
+    print(f"GOT KEY VALUE{filekey}",flush = True)
 
     if filekey is None:
         print(f"Error: not able to find file {path}", flush = True)
@@ -230,7 +230,7 @@ def handler(**data):
     line_dict = forward_map[filekey]
     parsed_lines = sorted(map(int, line_dict.keys()))
 
-    #print(f"Parsed lines: {parsed_lines}", flush=True)
+    print(f"Parsed lines: {parsed_lines}", flush=True)
 
     until = None
     for l in parsed_lines:
@@ -240,9 +240,10 @@ def handler(**data):
             break
 
     if until is None:
+        print(f"seems not valid forward map{parsed_lines} find maximal one smaller than {line}", flush = True)
         raise Exception(f"No valid line found in forward map for {path} with given line {line}")
 
-#    print(f"GOT THE UNTIL: {line_dict[str(until)]}", flush=True)
+    print(f"GOT THE UNTIL: {line_dict[str(until)]}", flush=True)
 
     ## now load the config and click the fucker
 
