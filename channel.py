@@ -180,6 +180,9 @@ if unix_enabled:
 from flask import Flask
 from flask_socketio import SocketIO
 
+
+
+
 local_server_enabled = config.getboolean("local_server", "enabled", fallback=False)
 local_server_sock = None
 def key_listener():
@@ -214,7 +217,18 @@ if local_server_enabled:
     host = config.get("local_server", "host", fallback="127.0.0.1")
     port = config.getint("local_server", "port", fallback=5001)
     app_flask = Flask(__name__)
-    socketio_flask = SocketIO(app_flask, cors_allowed_origins="*")
+    from socketapp import socketio as socketio_flask # 导入socketio
+#    socketio_flask = SocketIO(app_flask, cors_allowed_origins="*")
+    socketio_flask.init_app(app_flask, cors_allowed_origins="*")  # 初始化 SocketIO
+
+    try:
+        from services.syncpdf_remote.send_socket_message_to_pdfjs import pdf_routes
+        from services.syncpdf_remote.register_server_event import register_socketio_handlers
+        app_flask.register_blueprint(pdf_routes)
+        register_socketio_handlers(socketio_flask)  # 注册 SocketIO 事件处理器
+    except ImportError:
+        print("[Warning]pdf_routes not found, skipping PDF routes registration.")
+        warnings.append("[Warning]pdf_routes not found, skipping PDF routes registration.")
 
     @socketio_flask.on('connect')
     def handle_connect():
