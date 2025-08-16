@@ -240,8 +240,10 @@ def handler(**data):
             break
 
     if until is None:
+        until = parsed_lines[0]
         print(f"seems not valid forward map{parsed_lines} find maximal one smaller than {line}", flush = True)
-        raise Exception(f"No valid line found in forward map for {path} with given line {line}")
+#        raise Exception(f"No valid line found in forward map for {path} with given line {line}")
+        # reason: at some time at main.tex, when the cursor at premeable, usaually this does not gie value, so put aprsed_lines[0] to fo
 
     print(f"GOT THE UNTIL: {line_dict[str(until)]}", flush=True)
 
@@ -249,7 +251,7 @@ def handler(**data):
 
 
     sabi = {k:v for k,v in line_dict[str(until)].items()}
-    print(f"FUCKING FUCKING result: {sabi}",flush=True)
+    print(f"Result: {sabi}",flush=True)
     sabi["filestamp"]="fuck"
     sabi["refresh"]=True
     config_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "../config.ini"))
@@ -257,6 +259,7 @@ def handler(**data):
     config.read(config_path)
     host = config.get("local_server", "host", fallback="localhost")
     port = config.get("local_server", "port", fallback=5001)
+    print(f"Config has been obtained host = {host} and port = {port}", flush = True)
     try:
         results = requests.get(f"{host}:{port}/send_pdf_reload",params = sabi)
     except Exception as e:
