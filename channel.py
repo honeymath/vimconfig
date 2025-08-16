@@ -230,6 +230,18 @@ if local_server_enabled:
         print("[Warning]pdf_routes not found, skipping PDF routes registration.")
         warnings.append("[Warning]pdf_routes not found, skipping PDF routes registration.")
 
+    @socketio_flask.on('pdf_control_receive')
+    def handle_my_event(data):
+#        print("FUCKING RECEIVA THE DATA",flush=True)
+        msg = {
+            "command": "run_python_vim_script",
+            "target": "pdfsync_decode",
+            "args": data,
+#            "task_id": task_id # no taskid since not expected to get return of it
+        }
+        run_task(msg) ## only get the result, not need to send back to anywhere
+#        socketio.emit('server_forward',  msg)
+
     @socketio_flask.on('connect')
     def handle_connect():
         print(f"[channel_v5] Local Socket.IO client connected")

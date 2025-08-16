@@ -61,7 +61,7 @@ def handler(**data):
         raise Exception(f"Not able to find the file index {fileindex} in the file map")
 
     filepath = os.path.normpath(os.path.expanduser(file_map[fileindex])).strip()
-    print(f"E {filepath}:{line}", flush=True)
+    print(f"E +{line} {filepath}", flush=True)
     return filepath, line
 
 
