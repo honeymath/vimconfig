@@ -25,6 +25,12 @@ function! s:OnOut(channel, msg)
           execute 'cd ' . fnameescape(dir)
           let cmd = '!pdflatex -synctex=1 ' . shellescape(filename)
           execute cmd
+	  if v:shell_error != 0
+	    echohl ErrorMsg | echo "pdflatex failed" | echohl None
+	    "echo l:output
+	    return
+	  endif
+	  call Syncpdf(filename)
       else
           echom "FUCK YOU NO SUCH DIR"
           return
@@ -32,6 +38,16 @@ function! s:OnOut(channel, msg)
     endif
 endfunction
 
+function Syncpdf(filename)
+    let l:tosync = {
+                \ 'command': 'run_python_vim_script',
+                \ 'target': 'syncpdf',
+                \ 'args': {
+                \     'file': filename,
+                \ },
+                \ }
+    call SendToWorker(json_encode(l:tosync))
+endfunction
 
 function! Pdflatex(...) abort
     let l:json = {
@@ -59,13 +75,6 @@ function! s:OnExit(job, status)
 "  echom '[exit] Job exited with status ' . a:status
 endfunction
 
-let s:opts = {
-      \ 'in_io' : "pipe",
-      \ 'out_cb': function('s:OnOut'),
-      \ 'err_cb': function('s:OnErr'),
-      \ 'exit_cb': function('s:OnExit')
-      \ }
-
 function! s:ActivateCaller(uuid)
 	echom 'Activating the fucker caller with UUID: ' . a:uuid
 	let s:tools_path = expand('<sfile>:p:h') 
@@ -77,19 +86,36 @@ function! SendToWorker(msg)
     call ch_sendraw(s:fuck_id, a:msg . "\n")
 endfunction
 
-echom "I am fucking here"
-let s:path = expand(fnamemodify(expand('<sfile>'), ':p:h') . '/channel.py')
-echom s:path
+function! Startfuck(s:fuckyou)
+	let s:opts = {
+	      \ 'in_io' : "pipe",
+	      \ 'out_cb': function('s:OnOut'),
+	      \ 'err_cb': function('s:OnErr'),
+	      \ 'exit_cb': function('s:OnExit')
+	      \ }
+	echom "I am fucking here"
+	let s:path = expand(fnamemodify(expand('<sfile>'), ':p:h') . '/channel.py')
+	echom s:path
+	echom "The sfile is"
+	echom expand('<sfile>')
 
 
-let chars = '0123456789abcdefghijklmnopqrstuvwxyz'
-let s:t = localtime()
-let s:shortts = ''
-while s:t > 0
-    let s:shortts = chars[s:t % 36] . s:shortts
-    let s:t = s:t / 36
-endwhile
-echom 'Fucking shortts: ' . s:shortts
+"	let chars = '0123456789abcdefghijklmnopqrstuvwxyz'
+"	let s:t = localtime()
+"	let s:shortts = ''
+"	while s:t > 0
+"	    let s:shortts = chars[s:t % 36] . s:shortts
+"	    let s:t = s:t / 36
+"	endwhile
+"	echom 'Fucking shortts: ' . s:shortts
 
-let s:job_id = job_start(['python', s:path, s:shortts], s:opts)
-let s:fuck_id = job_getchannel(s:job_id)
+
+
+
+ "   let s:path = s:fuckyou
+    echom "FUCKYOU PATH"
+ "   echom s:fuckyou
+	let s:job_id = job_start(['python', s:path], s:opts)
+	let s:fuck_id = job_getchannel(s:job_id)
+endfunction
+

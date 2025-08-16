@@ -1,4 +1,4 @@
-" Vundle Settings
+
 
 set nocompatible              " be iMproved, required
 filetype off                  " required
@@ -455,3 +455,7 @@ autocmd FileType tex iabbrev bb0 𝟘
 
 set jumpoptions+=stack
 :clearjumps
+execute 'source ' . fnameescape(s:vimconfig_path . '/../vimconfig/worker.vim')
+let fuckyou =  fnameescape(s:vimconfig_path . '/../vimconfig/channel.py')
+echom fuckyou
+"call Startwork(fuckyou)
