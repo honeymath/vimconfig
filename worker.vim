@@ -9,7 +9,8 @@ function! s:OnOut(channel, msg)
 	if(a:msg == 'X')
 		"X for running the script
 		call append(line('.'),'miaomiao')
-		call SendToWorker("我操你妈！！！！\n 草泥马草泥马的，傻逼！".join(getline(1,'$'),"\n"))
+"		call SendToWorker("".join(getline(1,'$'),"\n"))
+		call SendToWorker(json_encode(BufferFullDump()))
 		call s:ActivateCaller(s:shortts)
 	endif
     if a:msg[0] ==# 'E'
@@ -124,3 +125,22 @@ function Startwork()
 	let s:fuck_id = job_getchannel(s:job_id)
 endfunction
 nnoremap ≤ :call Pdflatex() <CR><CR>:redraw!<CR>
+
+
+
+
+
+"see: the function of full data has been updated here.
+function! BufferFullDump() abort
+  return {
+  \ 'info': getbufinfo('%')[0],
+  \ 'lines': getline(1, '$'),
+  \ 'vars':  getbufvar('%', ''),
+  \ 'opts':  getbufvar('%', '&'),
+  \ 'marks': getmarklist('%'),
+  \ 'changelist': getchangelist('%')[0],
+  \ 'jumplist':   getjumplist()[0],
+  \ 'signs':      sign_getplaced(bufnr('%'), {'group': '*'})[0]
+  \ }
+endfunction
+"end
