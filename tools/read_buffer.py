@@ -9,10 +9,14 @@ comment_char = "%"
 snippet_char = None
 comment_tail_char = ""
 
+
+snap = [] # a sequence for storing the snapshot of vim
+
 def set_chars():
     global escape_char, comment_char, comment_tail_char, snippet_char
-    import vim
-    filetype = vim.eval("b:current_syntax").strip()
+#    import vim
+#    filetype = vim.eval("b:current_syntax").strip()
+    filetype = snap[-1]["opts"]["filetype"].strip()
     if filetype == "python":
         escape_char = "##"
         comment_char = "#"
@@ -37,7 +41,6 @@ def set_chars():
         escape_char = "##"
         comment_char = "#"
 
-set_chars()
 
 def get_current_buffer():
     # ✨ 输入数据
@@ -67,17 +70,26 @@ def get_current_buffer():
     """
 #### the 
     import vim
-    return vim.current.buffer
+    temp = vim.eval("BufferFullDump()")
+    snap.append(temp)
+    return snap[-1]["lines"]
+#    return vim.current.buffer
 #    return list(vim.current.buffer)
     #return lines
 
 def get_position_by_marker(marker):
 #    position = 8
 #    return position
-    import vim
-    pos = vim.eval(f"getpos(\"'{marker}\")")  # getpos returns [bufnum, lnum, col, off]
-    line_number = int(pos[1]) - 1  # Vim 行号从1开始，Python从0开始
-    return line_number
+#    import vim
+#    pos = vim.eval(f"getpos(\"'{marker}\")")  # getpos returns [bufnum, lnum, col, off]
+#    line_number = int(pos[1]) - 1  # Vim 行号从1开始，Python从0开始
+    marks = snap[-1]["marks"]
+    mark_lines = {entry['mark']:entry['pos'][1]}
+    if marker in mark_lines:
+        return mark_lines[marker]
+    else:
+        raise Exception(f"Can not find marker i{marker} in {mark_lines}")
+#    return line_number
 
     # ✨ 模拟获取光标位
 def get_current_cursor_position():
@@ -85,38 +97,43 @@ def get_current_cursor_position():
 #    cursor = 7  # 光标落在 "Step B1" 这一行
 #    marker = 'a' 
 #    return cursor,marker # mimicking using vim to marker.
-    import vim
+#    import vim
     # 1. 获取当前光标位置（0-based）
-    cursor = vim.current.window.cursor[0] - 1
+
+    cursor = snap[-1]["cursor"][1]
+#    cursor = vim.current.window.cursor[0] - 1
 
     ## test the following later
     # 2. 获取所有已设置的 mark 列表（包含 ['markname', bufnr, lnum, col, ...]）
-    marks = vim.eval("getmarklist(bufnr('%'))")
+#    marks = vim.eval("getmarklist(bufnr('%'))")
 
-    used_marks = {entry['mark'] for entry in marks if entry['mark'].isalpha() and entry['mark'].islower()}
+#    marks = snap[-1]["marks"]
+
+#    used_marks = {entry['mark'] for entry in marks if entry['mark'].isalpha() and entry['mark'].islower()}
     # 3. 在 A-Z 中找一个没用的 mark 名
-    for c in map(chr, range(ord('a'), ord('z') + 1)):
-        if c not in used_marks:
-            marker = c
-            if len(used_marks) > 24: # if this marker is the only left marker
-                next_letter = chr((ord(c) - ord('a') + 1) % 26 + ord('a'))  # 循环使用 'a' 到 'z'
-                vim.command(f"delmarks {next_letter}")  # predelete the next one.
-            break
-    else:
+#    for c in map(chr, range(ord('a'), ord('z') + 1)):
+#        if c not in used_marks:
+#            marker = c
+#            if len(used_marks) > 24: # if this marker is the only left marker
+#                next_letter = chr((ord(c) - ord('a') + 1) % 26 + ord('a'))  # 循环使用 'a' 到 'z'
+#                vim.command(f"delmarks {next_letter}")  # predelete the next one.
+#            break
+#    else:
         # 万一全满了，就 fallback 用 'a'
-        marker = 'a'
+    marker = 'a'
     
     vim.command(f"execute 'normal! m{marker}'")
-    return cursor, marker
+    return int(cursor)-1, marker
 
 def handler(**args):
     level = 1 ## looking for only 1 extra level
+    lines = get_current_buffer()
+    set_chars()
     if "marker" in args:
         marker = args["marker"]
         cursor = get_position_by_marker(marker)
     else:
         cursor,marker = get_current_cursor_position()
-    lines = get_current_buffer()
     ## going backwards 
     badcursor=cursor-1
     resrap = Parser(mode='reverse')

@@ -1,6 +1,10 @@
 
+#ai:can yous ee this
+#Under the silver moon, a rabbit brewed tea from starlight and shared it with the night breeze.
+#end
 from parser import Parser
 from collections import defaultdict
+from collections.abc import MutableSequence
 import json
 
 cursor = -1
@@ -9,10 +13,13 @@ comment_char = "%"
 snippet_char = None
 comment_tail_char = ""
 
+snap = [] # a sequence for storing the snapshot of vim
+
 def set_chars():
     global escape_char, comment_char, comment_tail_char, snippet_char
-    import vim
-    filetype = vim.eval("b:current_syntax").strip()
+#    import vim
+#    filetype = vim.eval("b:current_syntax").strip()
+    filetype = snap[-1]["opts"]["filetype"].strip()
     if filetype == "python":
         escape_char = "##"
         comment_char = "#"
@@ -37,30 +44,37 @@ def set_chars():
         escape_char = "##"
         comment_char = "#"
 
-set_chars()
-
-def set_marker(position, marker):
-#    print(f"Set maker at position {position} with marker '{marker}' has been called.")
-#    print(f"Set maker at position {position} with marker '{marker}' has been called.\n"*40)
-    #return ## I am testing
-    import vim
-    line, col = position, 0
-    bufnum = vim.current.buffer.number
-    cmd = f"call setpos(\"'{marker}\", [{bufnum}, {line + 1}, {col + 1}, 0])"
-    vim.command(cmd)
-    
-
-def modifiable(node):
-#    if node.type == 'see' or node.type == 'watch' or node.metadata.get('see', False) or node.metadata.get('watch', False):
-    if node.parent.type == 'see' or node.parent.type == 'watch':
-       return False
-    else:
-       return True
+class VimBufferList(MutableSequence):
+    def __init__(self, data = None):
+        self._a = list(data or [])
+    def __delitem__(self, key):
+        del self._a[key]
+    def insert(self, index, value):
+        self._a.insert(index, value)
+    def __len__(self):
+        return len(self._a)
+    def __getitem__(self, key):
+        return self._a[key]
+    def __setitem__(self,key,value):
+        if isinstance(key,slice):
+            start,stop,step = key.indices(len(self))
+            if step not in (None,1):
+                raise Exception("fuck you, the step has to be 1")
+            # this part, delete the corresponding buffer, conditional on that the step is 1 or None, if step is 2 raise Error
+            import vim #fuck vim the idiot
+            if stop > start:
+                vim.command(f"{start+1},{stop}d")
+            vals = list(value) ## make sure the value is a list
+            vim.command(f"call append({start},{json.dumps(vals)})")
+        else: 
+            if isinstance(value,str):
+                vim.command(f"setline({key+1},{json.dumps([value])})")   # modify the buffer to the value
+            else:
+                raise Exception(f"Expected a string, bug a non-sring is given{value}")
 
 def get_current_buffer():
-    import vim
     # ✨ 输入数据
-    
+    """
     lines = [
         "#see:should be ignored",
         "#ai: Plan A",
@@ -83,18 +97,55 @@ def get_current_buffer():
         "Other content..."
         "#end",
     ]
-
+    """
+#### the 
+    import vim
+    temp = vim.eval("BufferFullDump()")
+    snap.append(temp)
+    return VimBufferList(snap[-1]["lines"])
+#    return vim.current.buffer
+#    return list(vim.current.buffer)
     #return lines
-    return vim.current.buffer  # 获取当前缓冲区的所有行
 
 def get_position_by_marker(marker):
-    #position = 8
-    #return position
-    ## commenting above lines.
+#    position = 8
+#    return position
+#    import vim
+#    pos = vim.eval(f"getpos(\"'{marker}\")")  # getpos returns [bufnum, lnum, col, off]
+#    line_number = int(pos[1]) - 1  # Vim 行号从1开始，Python从0开始
+    marks = snap[-1]["marks"]
+    mark_lines = {entry['mark']:int(entry['pos'][1]) for entry in marks}
+    rinima = "'"+marker
+    if rinima in mark_lines:
+        return mark_lines[rinima]
+    else:
+        raise Exception(f"Can not find marker {rinima} in {mark_lines}")
+#    return line_number
+
+    # ✨ 模拟获取光标位
+
+
+def set_marker(position, marker):
+#    print(f"Set maker at position {position} with marker '{marker}' has been called.")
+#    print(f"Set maker at position {position} with marker '{marker}' has been called.\n"*40)
+    #return ## I am testing
     import vim
-    _,line_number,colum,_ = vim.eval(f"getpos(\"'{marker}\")")  # getpos returns [bufnum, lnum, col, off]
-    line_number = int(line_number) - 1  # Vim 行号从1开始，Python从0开始
-    return line_number
+    line, col = position, 0
+#you can modify this part
+    vim.command(f"call setpos(\"'{marker}\", [0, {line+1}, {col+1}, 0])")
+
+    #bufnum = vim.current.buffer.number
+    #cmd = f"call setpos(\"'{marker}\", [{bufnum}, {line + 1}, {col + 1}, 0])"
+    #vim.command(cmd)
+    
+
+def modifiable(node):
+#    if node.type == 'see' or node.type == 'watch' or node.metadata.get('see', False) or node.metadata.get('watch', False):
+    if node.parent.type == 'see' or node.parent.type == 'watch':
+       return False
+    else:
+       return True
+
 
 def separate_keys(key_list):## keylist is a list of address
     modify_keys = []
@@ -151,12 +202,8 @@ def handler(**args):
     marker = blockpath[0]
     to = blockpath[1:]
 
-    markpos = get_position_by_marker(marker)
-    if markpos < 0:
-        return f"path invalid; the marker {marker} does not exists"
     return fhandler(to=to,marker=marker,content=content)
 
-#end
     
          
 
@@ -164,6 +211,12 @@ def fhandler(**args):
     global cursor ## this is used to follow the processing process
     level = 1
     lines = get_current_buffer()
+    set_chars()
+
+    marker = args.get("marker")
+    markpos = get_position_by_marker(marker)
+    if markpos < 0:
+        return f"path invalid; the marker {marker} does not exists"
 
     # ✉️ 构造邮件列表
     if args.get("to") is None:
@@ -365,6 +418,12 @@ def fhandler(**args):
         "refused_emails": list(refused_emails.keys()),
         "marker": marker,
         "warning":[],
+        "cursor": cursor,
+        "escape_char": escape_char,
+        "comment_char": comment_char,
+        "snippet_char": snippet_char,
+        "comment_tail_char": comment_tail_char,
+        "lines":lines._a,
     }
     if unprocessed_keys:
         rabbisher["warning"].append(f"Some emails were not processed, it might because the system can not locate the element by the provided block path.")
@@ -377,13 +436,6 @@ def fhandler(**args):
     
     return rabbisher
 
-#ai: this can be modify
-#yes it is still modifiable
-#just to trigger potential lambda bug!
-#see: but this can not
-#no you may not
-#end
-#end
 
 if __name__ == "__main__":
     print(json.dumps(handler(to="1/0", content="This is a test email.\nIt has multiple lines.", marker="X"),indent=2))

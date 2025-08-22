@@ -138,6 +138,7 @@ function! BufferFullDump() abort
   \ 'vars':  getbufvar('%', ''),
   \ 'opts':  getbufvar('%', '&'),
   \ 'marks': getmarklist('%'),
+  \ 'cursor': getcurpos(),
   \ 'changelist': getchangelist('%')[0],
   \ 'jumplist':   getjumplist()[0],
   \ 'signs':      sign_getplaced(bufnr('%'), {'group': '*'})[0]
