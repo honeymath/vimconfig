@@ -1,8 +1,8 @@
 function! s:OnOut(channel, msg)
-  echom "OUT"
+"  echom "OUT"
 	if !empty(a:msg)
 		"    exec a:msg
-		echom '[stdout] ' . a:msg
+"		echom '[stdout] ' . a:msg
 	endif
 	let lnum = line('.')
 "	call setline(lnum, getline(lnum).a:msg)
@@ -17,6 +17,14 @@ function! s:OnOut(channel, msg)
         let new_msg = 'e' . a:msg[1:]
         execute new_msg
     endif
+	if a:msg[:2]==# 'VAL'
+		let new_msg = a:msg[3:]
+		call SendToWorker(json_encode(eval(new_msg)))
+	endif
+	if a:msg[:2]==# 'COM'
+		let new_msg = a:msg[3:]
+		execute(new_msg)
+	endif
     if a:msg[:7] ==# 'pdflatex'
       let parts = split(a:msg)
       if len(parts) < 2 | finish | endif
@@ -94,7 +102,7 @@ function! s:OnExit(job, status)
 endfunction
 
 function! s:ActivateCaller(uuid)
-	echom 'Activating the fucker caller with UUID: ' . a:uuid
+"	echom 'Activating the fucker caller with UUID: ' . a:uuid
 	let s:tools_path = expand('<sfile>:p:h') 
 endfunction
 

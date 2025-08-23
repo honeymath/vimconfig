@@ -1,18 +1,7 @@
-#This is a fake vim module when testing the code outside of vim.
+import json
+def command(text):
+    print(f"COM{text}", flush = True)
+def eval(text):
+    print(f"VAL{text}", flush = True)
+    return json.loads(input())
 
-#ai: Please polish the following code
-
-print("X", flush = True) ## this is to 
-
-
-
-
-
-
-## how to make set and get 
-
-
-class current:
-    buffer
-    @property
-    

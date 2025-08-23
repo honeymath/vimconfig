@@ -42,6 +42,9 @@ remote_sios = []
 
 
 def run_task(data):
+#    print(f"task received{json.dumps(data,indent=4)}", flush = True)
+    print(f"[    {data.keys()}    ]", flush = True)
+    print(f"    { 'command' in data}     ", flush = True)
     if data["command"] != "run_python_vim_script":
         raise Exception(f"Warning: we have to make sure data[command] is run_python_vim_script, bbut the command is {data['command']}")
         return {}
@@ -51,11 +54,13 @@ def run_task(data):
     args = data.get('args')
 
     if not target:
-        return {'success': False, 'error': 'No target specified'}
+        data.update({'success': False, 'error': 'No target specified'})
+        return data
 
     script_path = os.path.join(tools_path, f'{target}.py')
     if not os.path.exists(script_path):
-        return {'success': False, 'error': f'Script not found: {script_path}'}
+        data.update({'success': False, 'error': f'Script not found: {script_path}'})
+        return data
 
 #    print(f'Executing script: {script_path} with args: {args}', flush=True)
 #    print(f'Tools_path = {tools_path}', flush=True)
@@ -67,10 +72,13 @@ def run_task(data):
         module = importlib.import_module(target)
         handler = getattr(module, 'handler')
         result = function_caller.call_function(handler, args)
-        return {'success': True, 'result': result}
+        data.update({'success': True, 'result': result})
+        return data
     except Exception as e:
         print(f' An error occurred while executing the script: {e}', flush=True)
-        return {'success': False, 'error': str(e)}
+        data.update({'success': False, 'error': str(e)})
+        return data
+    return data
 
 
 for srv in servers:
@@ -80,11 +88,17 @@ for srv in servers:
         #@sio.on('server_forward')
         @sio_client.event
         def server_forward(data):
-#            print(f"收到 server_forward 消息:, {data}", flush=True)
+            print(f"收到 server_forward 消息:, {data}", flush=True)
             result = run_task(data) ## only get the result, not need to send back to anywhere
 #            print(f"执行结果: {result}", flush=True)
 #            print("X",flush=True)
 
+        @sio_client.event
+        def task(data):
+            print("Receive task, run \n", flush = True)
+            run_task(data)
+            sio_client.emit("task_result",data)        
+    
         @sio_client.event
         def connect():
             print(f"[Remote:{srv['name']}] connected")
@@ -185,23 +199,23 @@ from flask_socketio import SocketIO
 
 local_server_enabled = config.getboolean("local_server", "enabled", fallback=False)
 local_server_sock = None
-def key_listener():
-    lines = []
-    for line in sys.stdin:
-        line = line.strip()
-        if not line:
-            continue
-        lines.append(line)
-        try:
-            raw_json = '\n'.join(lines)
-            #print(f"Received json: {raw_json}", flush=True)
-            data = json.loads(raw_json)
-            run_task(data)
-            lines.clear()
-        except json.JSONDecodeError:
-            print("[WARNING]CAN NOT DECODE")
-            # Wait for more lines until JSON is complete
-            continue
+#def key_listener():
+#    lines = []
+#    for line in sys.stdin:
+#        line = line.strip()
+#        if not line:
+#            continue
+#        lines.append(line)
+#        try:
+#            raw_json = '\n'.join(lines)
+#            #print(f"Received json: {raw_json}", flush=True)
+#            data = json.loads(raw_json)
+#            run_task(data)
+#            lines.clear()
+#        except json.JSONDecodeError:
+#            print("[WARNING]CAN NOT DECODE")
+#            # Wait for more lines until JSON is complete
+#            continue
 #         print(f"Reciva:{line}",flush=True)
 #         if line.strip() == "x":
              # 向当前进程发送 Ctrl+C 信号
@@ -210,8 +224,8 @@ def key_listener():
 #             os.kill(os.getpid(), signal.SIGTERM)
 #             os.kill(os.getpid(), signal.SIGINT)
  
-listener_thread = threading.Thread(target=key_listener, daemon=True)
-listener_thread.start()
+#listener_thread = threading.Thread(target=key_listener, daemon=True)
+#listener_thread.start() # must disable fucking key listener
 
 if local_server_enabled:
     host = config.get("local_server", "host", fallback="127.0.0.1")
@@ -232,7 +246,7 @@ if local_server_enabled:
 
     @socketio_flask.on('pdf_control_receive')
     def handle_my_event(data):
-#        print("FUCKING RECEIVA THE DATA",flush=True)
+        print("FUCKING RECEIVA THE DATA",flush=True)
         msg = {
             "command": "run_python_vim_script",
             "target": "pdfsync_decode",

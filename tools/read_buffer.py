@@ -72,6 +72,8 @@ def get_current_buffer():
     import vim
     temp = vim.eval("BufferFullDump()")
     snap.append(temp)
+    if "lines" not in snap[-1]:
+        raise Exception(f"snap[-1] is {snap[-1]} with no lines found")
     return snap[-1]["lines"]
 #    return vim.current.buffer
 #    return list(vim.current.buffer)

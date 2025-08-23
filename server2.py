@@ -1,12 +1,14 @@
 #ai: I want a socketio version of it, it has to use socketio to send messaged
 from socketapp import socketio, Response
 import uuid
+import time
 
 RESPONSE_TIMEOUT = 30  # seconds
 
 class Client:
     def __init__(self, sid, server):
         self.sid = sid
+        self.timestamp = int(time.time())
         self.server = server
         self.responses = {}  # task_id -> Response
         self.server.clients[sid] = self
@@ -43,6 +45,9 @@ class Client:
 class VimSocketServer:
     def __init__(self):
         self.clients = {}
+
+    def start(self):
+        pass
 
     def get_client(self, sid):
         return self.clients.get(sid)

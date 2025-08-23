@@ -77,11 +77,11 @@ func OpenChannel()
     return channel
 endfunc
 
-let s:msg = "fail"
-let s:attempts = 0
-let s:maxattempts = 20
-while s:msg =~# "fail" && s:attempts < s:maxattempts
-    let s:attempts = s:attempts +1
-    let s:msg = OpenChannel()
-    sleep 100m
-endwhile
+"let s:msg = "fail"
+"let s:attempts = 0
+"let s:maxattempts = 20
+"while s:msg =~# "fail" && s:attempts < s:maxattempts
+"    let s:attempts = s:attempts +1
+"    let s:msg = OpenChannel()
+"    sleep 100m
+"endwhile
