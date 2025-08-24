@@ -4,10 +4,12 @@ import json
 import os
 import socket
 import sys
+import builtins
 import socketio
 import threading
 from wsgiref import simple_server
 import importlib
+builtins.input = sys.stdin.readline  # Redirect input to read from stdin
 
 ai_traffic = threading.Event()
 ai_traffic.set()
