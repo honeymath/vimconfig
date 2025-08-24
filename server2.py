@@ -62,7 +62,7 @@ def on_connect():
     print(f"The {sid} connected.")
 
 @socketio.on("client")
-def put_client():
+def put_client(*fucks, **args):
     sid = str(request.sid)
     Client(sid, server)
 
