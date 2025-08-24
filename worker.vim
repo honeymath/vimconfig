@@ -5,7 +5,7 @@ function! s:OnOut(channel, msg)
 "		echom '[stdout] ' . a:msg
 	endif
 	let lnum = line('.')
-"	call setline(lnum, getline(lnum).a:msg)
+	"call setline(lnum, getline(lnum).a:msg)
 	if(a:msg == 'X')
 		"X for running the script
 		call append(line('.'),'miaomiao')
@@ -19,7 +19,8 @@ function! s:OnOut(channel, msg)
     endif
 	if a:msg[:2]==# 'VAL'
 		let new_msg = a:msg[3:]
-		call SendToWorker(json_encode(eval(new_msg)))
+		call SendToWorker("\n".json_encode(eval(new_msg)))
+"		call SendToWorker(json_encode(eval(new_msg)))
 	endif
 	if a:msg[:2]==# 'COM'
 		let new_msg = a:msg[3:]

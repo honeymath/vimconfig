@@ -9,6 +9,10 @@ import threading
 from wsgiref import simple_server
 import importlib
 
+ai_traffic = threading.Event()
+ai_traffic.set()
+local_traffic = threading.Event()
+local_traffic.set()
 # === The tasks collection
 tasks = {}
 # === 读取配置 ===
@@ -96,7 +100,11 @@ for srv in servers:
         @sio_client.event
         def task(data):
             print("Receive task, run \n", flush = True)
+            ai_traffic.clear()
+            print("COMcall SendToWorker('{}')", flush = True)# actively clear the traffic please
+            local_traffic.wait()# wait until it shut shit off.
             run_task(data)
+            ai_traffic.set()
             sio_client.emit("task_result",data)        
     
         @sio_client.event
@@ -199,9 +207,22 @@ from flask_socketio import SocketIO
 
 local_server_enabled = config.getboolean("local_server", "enabled", fallback=False)
 local_server_sock = None
-#def key_listener():
+def key_listener():
+    while True:
+        line = ""
+        while line == "":
+            ai_traffic.wait()
+            local_traffic.clear()
+            line = input().strip()
+            print(f"FUCK[{line}]", flush=True)
+            local_traffic.set()
+        print(f"FUCKNONTRIVIAL[{line}]", flush = True)
+        data = json.loads(line)
+        if data:
+            run_task(data)
 #    lines = []
 #    for line in sys.stdin:
+#        ai_traffic.wait()
 #        line = line.strip()
 #        if not line:
 #            continue
@@ -214,18 +235,18 @@ local_server_sock = None
 #            lines.clear()
 #        except json.JSONDecodeError:
 #            print("[WARNING]CAN NOT DECODE")
-#            # Wait for more lines until JSON is complete
+            # Wait for more lines until JSON is complete
 #            continue
 #         print(f"Reciva:{line}",flush=True)
 #         if line.strip() == "x":
-             # 向当前进程发送 Ctrl+C 信号
+#            # 向当前进程发送 Ctrl+C 信号
 #             print(f"kill {os.getpid()}")
 #             os._exit(0)
 #             os.kill(os.getpid(), signal.SIGTERM)
 #             os.kill(os.getpid(), signal.SIGINT)
  
-#listener_thread = threading.Thread(target=key_listener, daemon=True)
-#listener_thread.start() # must disable fucking key listener
+listener_thread = threading.Thread(target=key_listener, daemon=True)
+listener_thread.start() # must disable fucking key listener
 
 if local_server_enabled:
     host = config.get("local_server", "host", fallback="127.0.0.1")
