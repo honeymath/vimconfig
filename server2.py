@@ -59,8 +59,12 @@ from flask import request
 @socketio.on("connect")
 def on_connect():
     sid = str(request.sid)
+    print(f"The {sid} connected.")
+
+@socketio.on("client")
+def put_client():
+    sid = str(request.sid)
     Client(sid, server)
-    print(f"Client {sid} connected.")
 
 @socketio.on("disconnect")
 def on_disconnect():

@@ -109,6 +109,7 @@ for srv in servers:
     
         @sio_client.event
         def connect():
+            sio_client.emit("client","")
             print(f"[Remote:{srv['name']}] connected")
 
         @sio_client.event
