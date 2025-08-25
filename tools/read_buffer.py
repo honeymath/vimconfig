@@ -34,6 +34,9 @@ def set_chars():
         comment_tail_char = "-->"
         snippet_char = "```"
         escape_char = ">"
+    elif filetype == "typescript":
+        escape_char = "////"
+        comment_char = "//"
     elif filetype == "javascript":
         escape_char = "////"
         comment_char = "//"
@@ -88,7 +91,7 @@ def get_position_by_marker(marker):
     marks = snap[-1]["marks"]
     mark_lines = {entry['mark']:entry['pos'][1]}
     if marker in mark_lines:
-        return mark_lines[marker]
+        return mark_lines[marker] -1
     else:
         raise Exception(f"Can not find marker i{marker} in {mark_lines}")
 #    return line_number

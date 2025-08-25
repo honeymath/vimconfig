@@ -37,6 +37,9 @@ def set_chars():
         comment_tail_char = "-->"
         snippet_char = "```"
         escape_char = ">"
+    elif filetype == "typescript":
+        escape_char = "////"
+        comment_char = "//"
     elif filetype == "javascript":
         escape_char = "////"
         comment_char = "//"
@@ -117,7 +120,7 @@ def get_position_by_marker(marker):
     mark_lines = {entry['mark']:int(entry['pos'][1]) for entry in marks}
     rinima = "'"+marker
     if rinima in mark_lines:
-        return mark_lines[rinima]
+        return mark_lines[rinima] -1
     else:
         raise Exception(f"Can not find marker {rinima} in {mark_lines}")
 #    return line_number
