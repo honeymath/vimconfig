@@ -5,7 +5,7 @@ function! s:OnOut(channel, msg)
 "		echom '[stdout] ' . a:msg
 	endif
 	let lnum = line('.')
-	"call setline(lnum, getline(lnum).a:msg)
+	call setline(lnum, getline(lnum).a:msg)
 	if(a:msg == 'X')
 		"X for running the script
 		call append(line('.'),'miaomiao')
@@ -95,7 +95,7 @@ function! s:OnErr(channel, msg)
     echom '[stderr] ' . a:msg
   endif
 	let lnum = line('.')
-"	call setline(lnum, getline(lnum).a:msg)
+	call setline(lnum, getline(lnum).a:msg)
 endfunction
 
 function! s:OnExit(job, status)
@@ -130,7 +130,13 @@ function Startwork()
 	echom "The sfile is"
 	echom expand('<sfile>')
 	    echom "FUCKYOU PATH"
-	let s:job_id = job_start(['python', s:fuckers], s:opts)
+"ai: Please see the following, I want to change it to run make it automatically conda, need to read the python from vim environment or the terminal environment?
+	if exists('g:python_name')
+		let s:job_id = job_start([g:python_name, s:fuckers], s:opts)
+	else
+		let s:job_id = job_start(['python', s:fuckers], s:opts)
+	endif
+"end
 	let s:fuck_id = job_getchannel(s:job_id)
 endfunction
 nnoremap ≤ :call Pdflatex() <CR><CR>:redraw!<CR>
