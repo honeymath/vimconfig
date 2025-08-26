@@ -5,7 +5,8 @@ function! s:OnOut(channel, msg)
 "		echom '[stdout] ' . a:msg
 	endif
 	let lnum = line('.')
-	call setline(lnum, getline(lnum).a:msg)
+"	call setline(lnum, getline(lnum).a:msg)
+	call WriteLog(a:msg)
 	if(a:msg == 'X')
 		"X for running the script
 		call append(line('.'),'miaomiao')
@@ -95,7 +96,8 @@ function! s:OnErr(channel, msg)
     echom '[stderr] ' . a:msg
   endif
 	let lnum = line('.')
-	call setline(lnum, getline(lnum).a:msg)
+"	call setline(lnum, getline(lnum).a:msg)
+	call WriteLog(a:msg)
 endfunction
 
 function! s:OnExit(job, status)
@@ -142,6 +144,15 @@ endfunction
 nnoremap ≤ :call Pdflatex() <CR><CR>:redraw!<CR>
 
 
+function! WriteLog(msg)
+  let l:logfile = expand('~/.vim_log.txt')
+  let l:fname = expand('%:p')
+  let l:time = strftime("%Y-%m-%d %H:%M:%S")
+  let l:line = printf("[%s] (%s) %s", l:time, l:fname, a:msg)
+
+  " 自动创建并追加
+  call writefile([l:line], l:logfile, 'a')
+endfunction
 
 
 
