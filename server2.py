@@ -57,9 +57,10 @@ server = VimSocketServer()
 from flask import request
 
 @socketio.on("connect")
-def on_connect():
+def on_connect(auth):
     sid = str(request.sid)
     print(f"The {sid} connected.")
+    return True
 
 @socketio.on("client")
 def put_client(*fucks, **args):
