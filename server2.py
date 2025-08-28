@@ -2,6 +2,7 @@
 from socketapp import socketio, Response
 import uuid
 import time
+import traceback
 
 RESPONSE_TIMEOUT = 30  # seconds
 
@@ -58,14 +59,22 @@ from flask import request
 
 @socketio.on("connect")
 def on_connect(auth):
-    sid = str(request.sid)
-    print(f"The {sid} connected.")
+    try:
+        sid = str(request.sid)
+        print(f"The {sid} connected.")
+        print(f"Now establishing client")
+        Client(sid, server)
+        print(f"Client established")
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
     return True
 
 @socketio.on("client")
 def put_client(*fucks, **args):
-    sid = str(request.sid)
-    Client(sid, server)
+    pass
+#    sid = str(request.sid)
+#    Client(sid, server)
 
 @socketio.on("disconnect")
 def on_disconnect():
@@ -73,6 +82,8 @@ def on_disconnect():
     if sid in server.clients:
         del server.clients[sid]
         print(f"Client {sid} disconnected.")
+    else:
+        print(f"Can not find {sid} in the connected server client")
 
 @socketio.on("task_result")
 def on_task_result(data):
