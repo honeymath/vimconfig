@@ -5,8 +5,10 @@ import os
 import socket
 import sys
 import builtins
+import time
 import socketio
 import threading
+import queue
 from wsgiref import simple_server
 import importlib
 builtins.input = sys.stdin.readline  # Redirect input to read from stdin
@@ -21,6 +23,8 @@ tasks = {}
 config_path = os.path.join(os.path.dirname(__file__), 'config.ini')
 config = configparser.ConfigParser()
 config.read(config_path)
+
+
 
 # 外部 TCP 服务器
 servers = []
@@ -85,11 +89,55 @@ def run_task(data):
         data.update({'success': False, 'error': str(e)})
         return data
     return data
+#
 
+log_queue = queue.Queue()
+def log_worker():
+    while True:
+        pfx, msg = log_queue.get()
+        if pfx is None:  # 退出信号
+            break
+        sys.stdout.write(f"[{time.strftime('%H:%M:%S')}] [{srv['name']}] {pfx} {msg}\n")
+        sys.stdout.flush()
+        log_queue.task_done()
+        
+threading.Thread(target=log_worker, daemon=True).start()
 
 for srv in servers:
     try:
-        sio_client = socketio.Client()
+        sio_client = socketio.Client(
+        reconnection=True,
+        reconnection_attempts=0,          # 无限重连
+        reconnection_delay=1,
+        reconnection_delay_max=50,
+        logger=True,                      # 打开 Socket.IO 客户端日志
+        engineio_logger=True,             # 打开 Engine.IO 底层日志
+        request_timeout=5,
+    )
+        ns = "/"
+        url = f"{srv['host']}"+(f":{srv['port']}" if int(srv['port'])>0 else "")
+        def log(pfx, msg):
+            log_queue.put((pfx, msg))
+#            print(f"[{time.strftime('%H:%M:%S')}] [{srv['name']}] {pfx} {msg}", flush=True)
+
+        def safe_emit(event, data):
+            try:
+                log("PRE-EMIT", f"event={event} connected={sio_client.connected} sid={sio_client.sid} namespaces={getattr(sio_client,'namespaces',None)}")
+                if not sio_client.connected:
+                    log("SKIP", "not connected")
+                    return False
+                if hasattr(sio_client, "namespaces") and ns not in sio_client.namespaces:
+                    log("SKIP", f"namespace {ns} not connected: available namespaces {sio_client.namespaces}")
+                    return False
+                sio_client.emit(event, data, namespace=ns, callback=lambda *ack: log("ACK", f"{event}: {ack}"))
+                return True
+            except socketio.exceptions.BadNamespaceError as e:
+                log("BadNamespaceError", f"{e} connected={sio_client.connected} ns={getattr(sio_client,'namespaces',None)}")
+                return False
+            except Exception as e:
+                log("EMIT_FAIL", f"{type(e).__name__}: {e}")
+                traceback.print_exc()
+                return False
 
         #@sio.on('server_forward')
         @sio_client.event
@@ -107,12 +155,29 @@ for srv in servers:
             local_traffic.wait()# wait until it shut shit off.
             run_task(data)
             ai_traffic.set()
-            sio_client.emit("task_result",data)        
+#            sio_client.emit("task_result",data)        
+            safe_emit("task_result",data)
     
         @sio_client.event
         def connect():
-            sio_client.emit("client","")
+#            sio_client.emit("client","")
             print(f"[Remote:{srv['name']}] connected")
+
+
+        @sio_client.event
+        def connect_error(data):
+            print("Connection failed:", data)
+            # 在这里主动等待再重试
+            while True:
+                try:
+                    print("Retrying...")
+                    sio_client.connect(url)
+#                    sio_client.connect("https://wolf-good-shortly.ngrok-free.app", namespaces=["/"])
+                    break
+                except Exception as e:
+                    print("Retry failed:", e)
+                    time.sleep(1)
+
 
         @sio_client.event
         def disconnect():
@@ -126,7 +191,6 @@ for srv in servers:
                 callback=lambda x: sio_client.emit("result", x)
             )
 
-        url = f"{srv['host']}"+(f":{srv['port']}" if int(srv['port'])>0 else "")
         print(f"Fucking connecting to {url}")
         sio_client.connect(url)
         remote_sios.append(sio_client)

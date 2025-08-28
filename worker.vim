@@ -7,20 +7,40 @@ function! s:OnOut(channel, msg)
 	let lnum = line('.')
 "	call setline(lnum, getline(lnum).a:msg)
 	call WriteLog(a:msg)
-	if(a:msg == 'X')
+"	if(a:msg == 'X')
 		"X for running the script
-		call append(line('.'),'miaomiao')
+"		call append(line('.'),'miaomiao')
 "		call SendToWorker("".join(getline(1,'$'),"\n"))
-		call SendToWorker(json_encode(BufferFullDump()))
-		call s:ActivateCaller(s:shortts)
-	endif
-    if a:msg[0] ==# 'E'
-        let new_msg = 'e' . a:msg[1:]
-        execute new_msg
-    endif
+"		call SendToWorker(json_encode(BufferFullDump()))
+"		call s:ActivateCaller(s:shortts)
+"	endif
 	if a:msg[:2]==# 'VAL'
 		let new_msg = a:msg[3:]
-		call SendToWorker("\n".json_encode(eval(new_msg)))
+		call WriteLog("Vim.Evaluate: " . new_msg)
+		try
+			let expr = eval(new_msg)
+		catch /.*/
+			call WriteLog("Error vim evaluating: " . new_msg)
+			let expr="{}"
+		endtry
+		
+		try 
+"			let cleanexpr = CleanForJSONWhitelist(expr)
+			let cleanexpr = CleanForJSONWhitelistSafe(expr)
+		catch /.*/
+			call WriteLog("Error vim cleaning for json: " . string(expr))
+			let cleanexpr="{}"
+		endtry
+
+		try
+			let payload = json_encode(cleanexpr)
+		catch /.*/
+			call WriteLog("Error vim json encoding: " . string(expr))
+			let payload="{}"
+		endtry
+		call WriteLog("Vim.Json_payload_ready: " . payload)
+		call SendToWorker("\n".payload)
+"		call SendToWorker("\n".json_encode(eval(new_msg)))
 "		call SendToWorker(json_encode(eval(new_msg)))
 	endif
 	if a:msg[:2]==# 'COM'
@@ -171,3 +191,87 @@ function! BufferFullDump() abort
   \ }
 endfunction
 "end
+
+
+
+function! CleanForJSONWhitelist(obj) abort
+  let t = type(a:obj)
+
+  " Number, string, float -> pass directly
+  if t == 0 || t == 1 || t == 5
+    return a:obj
+
+  " Bool (v:true / v:false are just special Numbers in Vim)
+  if a:obj is# v:true || a:obj is# v:false
+    return a:obj
+  endif
+
+  " List -> recursively clean
+  if t == 3
+    return map(copy(a:obj), 'CleanForJSONWhitelist(v:val)')
+  endif
+
+  " Dict -> recursively clean (but only keep JSON-safe keys/values)
+  if t == 4
+    let result = {}
+    for [k, v] in items(a:obj)
+      if type(k) == 1 " key must be string
+        let result[k] = CleanForJSONWhitelist(v)
+      endif
+    endfor
+    return result
+  endif
+
+  " Everything else (function, job, partial, etc.) → ignore
+  return v:null
+endfunction
+
+
+
+
+
+function! CleanForJSONWhitelistSafe(obj, ...) abort
+  let path = get(a:000, 0, '') " optional path for debugging
+  let t = type(a:obj)
+
+  try
+    " Number, string, float
+    if t == 0 || t == 1 || t == 5
+      return a:obj
+    endif
+
+    " Bool
+    if a:obj is# v:true || a:obj is# v:false
+      return a:obj
+    endif
+
+    " List
+    if t == 3
+      let res = []
+      for i in range(len(a:obj))
+        call add(res, CleanForJSONWhitelistSafe(a:obj[i], path . '[' . i . ']'))
+      endfor
+      return res
+    endif
+
+    " Dict
+    if t == 4
+      let result = {}
+      for [k, v] in items(a:obj)
+        if type(k) == 1
+          let result[k] = CleanForJSONWhitelistSafe(v, path . '.' . k)
+        endif
+      endfor
+      return result
+    endif
+
+    " Other types: null
+    return v:null
+
+  catch /.*/
+    call WriteLog('[JSON CLEAN ERROR] at path: ' . path)
+    call WriteLog('  type=' . t . ' value=' . string(a:obj))
+    return v:null
+  endtry
+endfunction
+

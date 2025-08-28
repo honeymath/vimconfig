@@ -47,6 +47,24 @@ def set_chars():
         escape_char = "##"
         comment_char = "#"
 
+def fix_surrogates(text: str) -> str:
+    out = []
+    i = 0
+    while i < len(text):
+        cp = ord(text[i])
+        # 检查高代理
+        if 0xD800 <= cp <= 0xDBFF and i + 1 < len(text):
+            cp2 = ord(text[i+1])
+            # 检查低代理
+            if 0xDC00 <= cp2 <= 0xDFFF:
+                codepoint = 0x10000 + ((cp - 0xD800) << 10) + (cp2 - 0xDC00)
+                out.append(chr(codepoint))
+                i += 2
+                continue
+        out.append(text[i])
+        i += 1
+    return "".join(out)
+
 class VimBufferList(MutableSequence):
     def __init__(self, data = None):
         self._a = list(data or [])
@@ -67,8 +85,9 @@ class VimBufferList(MutableSequence):
             import vim #fuck vim the idiot
             if stop > start:
                 vim.command(f"{start+1},{stop}d")
-            vals = list(value) ## make sure the value is a list
-            vim.command(f"call append({start},{json.dumps(vals)})")
+            vals = list(value)
+#            vals = [fix_surrogates(vv) for vv in list(value)] ## make sure the value is a list
+            vim.command(f"call append({start},{json.dumps(vals,ensure_ascii=False)})")
         else: 
             if isinstance(value,str):
                 vim.command(f"setline({key+1},{json.dumps([value])})")   # modify the buffer to the value
