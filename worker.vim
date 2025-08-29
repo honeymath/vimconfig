@@ -167,7 +167,7 @@ nnoremap ≤ :call Pdflatex() <CR><CR>:redraw!<CR>
 function! WriteLog(msg)
 
 if exists('g:vim_log')
-  let l:logfile = expand('~/.vim_log.txt')
+  let l:logfile = expand(g:vim_log)
   let l:fname = expand('%:p')
   let l:time = strftime("%Y-%m-%d %H:%M:%S")
   let l:line = printf("[%s] (%s) %s", l:time, l:fname, a:msg)
