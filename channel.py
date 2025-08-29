@@ -1,4 +1,7 @@
+import logging
+import traceback
 import configparser
+import engineio
 import signal
 import json
 import os
@@ -103,16 +106,31 @@ def log_worker():
         
 threading.Thread(target=log_worker, daemon=True).start()
 
+#def fucker(msg, *args):
+#    log_queue.put(("EIO", f"{msg} {' '.join(map(str,args))}"))
+
+class QueueLogger(logging.Logger):
+    def __init__(self, name, log_queue):
+        super().__init__(name)
+        self.log_queue = log_queue
+
+    def info(self, msg, *args, **kwargs):
+        self.log_queue.put(("EIO", msg % args if args else msg))
+
+# usage
+fucker = QueueLogger("engineio", log_queue)
+
+
 for srv in servers:
     try:
         sio_client = socketio.Client(
-        reconnection=True,
-        reconnection_attempts=0,          # 无限重连
-        reconnection_delay=1,
-        reconnection_delay_max=50,
+        reconnection=False,
+#        reconnection_attempts=0,          # 无限重连
+#        reconnection_delay=1,
+#        reconnection_delay_max=500,
         logger=True,                      # 打开 Socket.IO 客户端日志
-        engineio_logger=True,             # 打开 Engine.IO 底层日志
-        request_timeout=5,
+        engineio_logger=fucker,             # 打开 Engine.IO 底层日志
+        request_timeout=60,
     )
         ns = "/"
         url = f"{srv['host']}"+(f":{srv['port']}" if int(srv['port'])>0 else "")
@@ -139,63 +157,103 @@ for srv in servers:
                 traceback.print_exc()
                 return False
 
-        #@sio.on('server_forward')
-        @sio_client.event
-        def server_forward(data):
-            print(f"收到 server_forward 消息:, {data}", flush=True)
-            result = run_task(data) ## only get the result, not need to send back to anywhere
-#            print(f"执行结果: {result}", flush=True)
-#            print("X",flush=True)
+        def register_fuckers(sio_client):
+            @sio_client.event
+            def server_forward(data):
+                print(f"收到 server_forward 消息:, {data}", flush=True)
+                result = run_task(data) 
 
-        @sio_client.event
-        def task(data):
-            print("Receive task, run \n", flush = True)
-            ai_traffic.clear()
-            print("COMcall SendToWorker('{}')", flush = True)# actively clear the traffic please
-            local_traffic.wait()# wait until it shut shit off.
-            run_task(data)
-            ai_traffic.set()
-#            sio_client.emit("task_result",data)        
-            safe_emit("task_result",data)
-    
-        @sio_client.event
-        def connect():
-#            sio_client.emit("client","")
-            print(f"[Remote:{srv['name']}] connected")
+            @sio_client.event
+            def task(data):
+                print("Receive task, run \n", flush = True)
+                ai_traffic.clear()
+                print("COMcall SendToWorker('{}')", flush = True)# actively clear the traffic please
+                local_traffic.wait()# wait until it shut shit off.
+                run_task(data)
+                ai_traffic.set()
+    #            sio_client.emit("task_result",data)        
+                safe_emit("task_result",data)
+        
+            @sio_client.event
+            def connect():
+    #            sio_client.emit("client","")
+                print(f"[Remote:{srv['name']}] connected, name spaces :{sio_client.namespaces}",flush=True)
 
 
-        @sio_client.event
-        def connect_error(data):
-            print("Connection failed:", data)
-            # 在这里主动等待再重试
+            @sio_client.event
+            def connect_error(data):
+                log("PREERROR", f"Connection failed:{data}")
+                # 在这里主动等待再重试
+                while False: ### ignore this logic, fuck it.
+                    try:
+                        log("REER","Retrying...")
+                        sio_client.disconnect()
+                        log("AGAIN","Disconnected, waiting for 2 seconds")
+                        time.sleep(2) # wait for fucking 2 secada
+                        sio_client.connect(url)
+    #                    sio_client.connect("https://wolf-good-shortly.ngrok-free.app", namespaces=["/"])
+                        break
+                    except Exception as e:
+                        log("Retry failed:", str(e))
+                        time.sleep(1)
+
+
+            @sio_client.event
+            def disconnect(*args):
+                print(f"[Remote:{srv['name']}] disconnected {args} I will try fucking reconnect")
+#                try:
+#                    print("FORCING CLOSE EIO")
+#                    sio_client.eio.disconnect(abort=True)
+#                except Exception as e:
+#                    print("force close error:", e)
+                retry_connect()
+
+            @sio_client.event
+            def message(data):
+                print(f"[Remote:{srv['name']}] message: {data}")
+                push_task(
+                    data=data,
+                    callback=lambda x: sio_client.emit("result", x)
+                )
+
+        def retry_connect():
+            global sio_client
             while True:
                 try:
-                    print("Retrying...")
+                    if getattr(sio_client, "fuck", False):
+                        print("skip reconnect!! FUCK your family!!!you bullshit!!",flush=True)
+                        return
+                    else:
+                        sio_client.fuck = True
+                    print("[CLIENT] trying reconnect...",flush=True)
+                    sio_client = socketio.Client(
+                            reconnection=False,
+                            logger=True,                      # 打开 Socket.IO 客户端日志
+                            engineio_logger=fucker,             # 打开 Engine.IO 底层日志
+                    )
+                    register_fuckers(sio_client)
                     sio_client.connect(url)
-#                    sio_client.connect("https://wolf-good-shortly.ngrok-free.app", namespaces=["/"])
                     break
                 except Exception as e:
-                    print("Retry failed:", e)
-                    time.sleep(1)
+                    print(f"retry failed:{e}", flush = True)
+                    time.sleep(2)
 
 
-        @sio_client.event
-        def disconnect():
-            print(f"[Remote:{srv['name']}] disconnected")
-
-        @sio_client.event
-        def message(data):
-            print(f"[Remote:{srv['name']}] message: {data}")
-            push_task(
-                data=data,
-                callback=lambda x: sio_client.emit("result", x)
-            )
-
-        print(f"Fucking connecting to {url}")
+        register_fuckers(sio_client)
+        print(f"Fucking connecting to {url}",flush = True)
+        print(f"Fucking connecting to {url}",flush = True)
+        print(f"Fucking connecting to {url}",flush = True)
+        print(f"Fucking connecting to {url}",flush = True)
+        print(f"Fucking connecting to {url}",flush = True)
+        print(f"Fucking connecting to {url}",flush = True)
         sio_client.connect(url)
+        print(f"Fucking connected",flush = True)
+        print(f"Fucking connected",flush = True)
+        print(f"Fucking connected",flush = True)
         remote_sios.append(sio_client)
     except Exception as e:
         print(f"[Remote:{srv['name']}] connection failed: {e}")
+        log("CONNECT_FAIL", traceback.format_exc())
 ## The following is the unix socket
 import socket
 
