@@ -165,6 +165,8 @@ nnoremap ≤ :call Pdflatex() <CR><CR>:redraw!<CR>
 
 
 function! WriteLog(msg)
+
+if exists('g:vim_log')
   let l:logfile = expand('~/.vim_log.txt')
   let l:fname = expand('%:p')
   let l:time = strftime("%Y-%m-%d %H:%M:%S")
@@ -172,6 +174,7 @@ function! WriteLog(msg)
 
   " 自动创建并追加
   call writefile([l:line], l:logfile, 'a')
+endif
 endfunction
 
 
